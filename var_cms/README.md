@@ -1,5 +1,7 @@
 # django-var-cms
 
+[![Documentation Preview](https://img.shields.io/badge/docs-live_preview-emerald?style=for-the-badge&logo=github)](https://rahul-baberwal.github.io/django-var-cms/)
+
 A modern, highly customizable administrative Control Panel and CMS registry for Django projects. Built with premium glassmorphic aesthetics, role-based security, and rich media processing.
 
 Created by **[Rahul Baberwal](https://rahulbaberwal.com)**.

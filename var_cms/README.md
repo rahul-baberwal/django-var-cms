@@ -1,6 +1,7 @@
 # django-var-cms
 
 [![Documentation Preview](https://img.shields.io/badge/docs-live_preview-emerald?style=for-the-badge&logo=github)](https://rahul-baberwal.github.io/django-var-cms/)
+[![Latest on Django Packages](https://img.shields.io/badge/Django_Packages-django--var--cms-8c3c26.svg?style=for-the-badge&logo=django)](https://djangopackages.org/packages/p/django-var-cms/)
 
 A modern, highly customizable administrative Control Panel and CMS registry for Django projects. Built with premium glassmorphic aesthetics, role-based security, and rich media processing.
 

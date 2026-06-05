@@ -1,0 +1,112 @@
+{% extends "cms_core/base.html" %}
+{% load cms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span> <a href="{% cms_list_url app model_name %}">{{ admin.verbose_name_plural|title }}</a>
+  <span>›</span> {% if is_add %}Add{% else %}Edit{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% cms_list_url app model_name %}" class="btn btn-ghost btn-sm">← Back to list</a>
+{% endblock %}
+
+{% block content %}
+<div style="max-width:860px;">
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-danger">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Readonly fields (shown, not editable) -->
+    {% if readonly_fields %}
+    <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:14px;text-transform:uppercase;letter-spacing:.8px;">Read-only Info</div>
+      <div class="form-grid">
+        {% for fname, val in readonly_fields.items %}
+        <div class="form-group">
+          <label>{{ fname|upper }}</label>
+          <div class="readonly-val">{{ val|safe_html }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Editable fields -->
+    <div class="card" style="padding:20px 24px;margin-bottom:16px;">
+      <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:18px;text-transform:uppercase;letter-spacing:.8px;">
+        {% if is_add %}New {{ admin.verbose_name }}{% else %}Edit {{ admin.verbose_name }}{% endif %}
+      </div>
+      <div class="form-grid">
+        {% for field in form %}
+          {% if field.field.widget.input_type == 'textarea' or field.field.widget|stringformat:"s" contains "Textarea" %}
+            <div class="form-group full">
+          {% else %}
+            <div class="form-group">
+          {% endif %}
+            <label for="{{ field.id_for_label }}">
+              {{ field.label }}{% if field.field.required %}<span class="required">*</span>{% endif %}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <span style="font-size:11px;color:var(--text-muted);">{{ field.help_text }}</span>
+            {% endif %}
+            {% if field.errors %}
+              <ul class="errorlist">
+                {% for err in field.errors %}<li>{{ err }}</li>{% endfor %}
+              </ul>
+            {% endif %}
+          </div>
+        {% empty %}
+          <div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;">
+            No editable fields. All fields may be readonly or excluded.
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;align-items:center;">
+      <button type="submit" class="btn btn-primary">
+        {% if is_add %}✓ Create {{ admin.verbose_name }}{% else %}✓ Save Changes{% endif %}
+      </button>
+      <a href="{% cms_list_url app model_name %}" class="btn btn-ghost">Cancel</a>
+      {% if not is_add and admin.allow_delete %}
+        <a href="{% cms_delete_url app model_name obj.pk %}" class="btn btn-danger" style="margin-left:auto;">
+          Delete
+        </a>
+      {% endif %}
+    </div>
+
+  </form>
+</div>
+
+<style>
+/* Style Django form widgets to match CMS theme */
+#content input[type=text], #content input[type=email], #content input[type=url],
+#content input[type=number], #content input[type=password], #content input[type=date],
+#content input[type=datetime-local], #content input[type=time], #content input[type=file],
+#content select, #content textarea {
+  background: var(--input-bg) !important;
+  border: 1px solid var(--border-light) !important;
+  color: var(--text) !important;
+  border-radius: var(--radius) !important;
+  padding: 9px 12px !important;
+  font-size: 13px !important;
+  font-family: var(--font-body) !important;
+  width: 100% !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+#content select[multiple] { min-height: 100px; }
+#content input:focus, #content select:focus, #content textarea:focus {
+  border-color: var(--accent) !important;
+}
+</style>
+<div id="content" style="display:none;"></div>
+{% endblock %}

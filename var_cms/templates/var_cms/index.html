@@ -1,0 +1,66 @@
+{% extends "var_cms/base.html" %}
+{% load var_cms_tags %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Premium Banner Greeting -->
+<div style="background:linear-gradient(135deg, var(--accent), var(--purple));padding:28px 32px;border-radius:var(--radius);margin-bottom:28px;color:#fff;box-shadow:0 8px 24px var(--accent-glow);position:relative;overflow:hidden;">
+  <div style="position:relative;z-index:2;">
+    <h2 style="font-family:var(--fh);font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;">Control Center</h2>
+    <p style="opacity:0.9;font-size:13.5px;max-width:540px;margin-bottom:14px;line-height:1.5;">
+      Welcome back, <strong>{{ request.user }}</strong>. Manage your models, edit content with rich HTML, crop assets, and translate metadata directly.
+    </p>
+    {% if request.user.groups.all %}
+    <div style="display:flex;gap:6px;align-items:center;">
+      <span style="font-size:11px;opacity:0.8;font-family:var(--fm);text-transform:uppercase;">Roles:</span>
+      {% for g in request.user.groups.all %}
+        <span class="badge badge-purple" style="background:rgba(255,255,255,0.18);color:#fff;border-color:rgba(255,255,255,0.25);">{{ g.name }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  <i data-lucide="sparkles" style="position:absolute;right:24px;bottom:-10px;width:120px;height:120px;opacity:0.15;transform:rotate(15deg);pointer-events:none;"></i>
+</div>
+
+<!-- Stats grid -->
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:20px;margin-bottom:32px;">
+  {% for item in registry %}
+  {% if item.dashboard_card %}
+  <div class="stat-card" style="display:flex;flex-direction:column;justify-content:space-between;height:100%;cursor:default;padding:24px;">
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <span style="font-size:10px;color:var(--text-muted);font-family:var(--fm);text-transform:uppercase;letter-spacing:1px;font-weight:700;">
+          {{ item.app|upper }}
+        </span>
+        {% if item.admin.icon %}
+          <i data-lucide="{{ item.admin.icon }}" style="width:20px;height:20px;color:var(--accent);"></i>
+        {% else %}
+          <span style="font-family:var(--fh);font-weight:800;color:var(--accent);font-size:16px;">{{ item.verbose_name_plural|slice:":1"|upper }}</span>
+        {% endif %}
+      </div>
+      <div style="font-family:var(--fh);font-size:36px;font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:4px;">{{ item.count }}</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text-dim);font-family:var(--fb);">
+        {{ item.verbose_name_plural|title }}
+      </div>
+    </div>
+    
+    {% if item.buttons %}
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:14px;">
+      {% for btn in item.buttons %}
+        <a href="{{ btn.url }}" class="btn btn-sm {{ btn.class|default:'btn-ghost' }}" style="flex:1;justify-content:center;text-align:center;">
+          {{ btn.label }}
+        </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+  {% empty %}
+  <div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;padding:16px 0;">
+    No models registered. Create <code style="font-family:var(--fm);background:var(--border);padding:2px 6px;border-radius:4px;">var_cms_admin.py</code> in any app.
+  </div>
+  {% endfor %}
+</div>
+
+{% endblock %}

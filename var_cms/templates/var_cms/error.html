@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ error_title }} | {{ var_cms_site.site_header }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Outfit:wght@600;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+  <style>
+    :root {
+      --bg: hsl(224, 25%, 8%);
+      --card: hsla(224, 20%, 14%, 0.6);
+      --border: hsla(224, 20%, 25%, 0.4);
+      --accent: {% if status_code == 403 %}var(--amber){% elif status_code == 500 %}var(--red){% else %}{% if var_cms_site.accent_color %}hsl({{ var_cms_site.accent_color }}){% else %}hsl(250, 95%, 72%){% endif %}{% endif %};
+      --accent-glow: {% if status_code == 403 %}hsla(38, 92%, 50%, 0.25){% elif status_code == 500 %}hsla(347, 87%, 60%, 0.25){% else %}{% if var_cms_site.accent_color %}hsla({{ var_cms_site.accent_color }}, 0.25){% else %}hsla(250, 95%, 72%, 0.25){% endif %}{% endif %};
+      --text: hsl(220, 25%, 92%);
+      --text-dim: hsl(220, 15%, 72%);
+      --text-muted: hsl(220, 10%, 50%);
+      --green: hsl(142, 72%, 45%);
+      --red: hsl(347, 87%, 60%);
+      --amber: hsl(38, 92%, 50%);
+      --purple: hsl(258, 90%, 75%);
+      --blue: hsl(199, 89%, 60%);
+      --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+    .blob {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      z-index: 1;
+    }
+    .blob-1 {
+      width: 400px;
+      height: 400px;
+      background: var(--accent);
+      top: -100px;
+      left: -100px;
+      animation: float 12s infinite alternate;
+    }
+    .blob-2 {
+      width: 350px;
+      height: 350px;
+      background: {% if status_code == 403 %}var(--red){% elif status_code == 500 %}var(--purple){% else %}var(--blue){% endif %};
+      bottom: -80px;
+      right: -80px;
+      animation: float 8s infinite alternate-reverse;
+    }
+    @keyframes float {
+      0% { transform: translateY(0) scale(1); }
+      100% { transform: translateY(30px) scale(1.1); }
+    }
+    .error-container {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+    }
+    .card {
+      background: var(--card);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 40px 32px;
+      box-shadow: 0 20px 40px -15px rgba(0,0,0,0.5);
+      text-align: center;
+    }
+    .error-code {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 84px;
+      line-height: 1;
+      letter-spacing: -2px;
+      background: linear-gradient(135deg, var(--text), var(--text-dim));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 16px;
+    }
+    .error-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      color: var(--accent);
+      margin-bottom: 24px;
+      border: 1px solid hsla(250,95%,72%,0.1);
+    }
+    .title {
+      font-family: 'Outfit', sans-serif;
+      font-weight: 800;
+      font-size: 24px;
+      letter-spacing: -0.5px;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+    .message {
+      font-size: 14px;
+      color: var(--text-dim);
+      line-height: 1.6;
+      margin-bottom: 32px;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, var(--accent), {% if status_code == 403 %}var(--red){% elif status_code == 500 %}var(--purple){% else %}var(--purple){% endif %});
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+    .btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 8px 20px var(--accent-glow);
+      filter: brightness(1.08);
+    }
+    .btn:active { transform: translateY(0); }
+    .login-footer {
+      text-align: center;
+      margin-top: 24px;
+      font-size: 11.5px;
+      color: var(--text-dim);
+      opacity: 0.75;
+    }
+    .login-footer a {
+      color: var(--text);
+      text-decoration: none;
+      font-weight: 600;
+      transition: var(--transition);
+    }
+    .login-footer a:hover {
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="blob blob-1"></div>
+  <div class="blob blob-2"></div>
+
+  <div class="error-container">
+    <div class="card">
+      <div class="error-icon">
+        {% if status_code == 403 %}
+          <i data-lucide="shield-alert" style="width:32px;height:32px;"></i>
+        {% elif status_code == 500 %}
+          <i data-lucide="server-crash" style="width:32px;height:32px;"></i>
+        {% else %}
+          <i data-lucide="compass" style="width:32px;height:32px;"></i>
+        {% endif %}
+      </div>
+      <div class="error-code">{{ status_code }}</div>
+      <div class="title">{{ error_title }}</div>
+      <div class="message">{{ error_message }}</div>
+      <a href="/var-cms/" class="btn">
+        <i data-lucide="home" style="width:16px;height:16px;"></i>
+        <span>Return to Dashboard</span>
+      </a>
+    </div>
+    <div class="login-footer">
+      Powered by <a href="https://github.com/rahul-baberwal/django-var-cms" target="_blank" rel="noopener">VAR CMS</a> · Developed by <a href="https://rahulbaberwal.com" target="_blank" rel="noopener">Rahul Baberwal</a>
+    </div>
+  </div>
+
+  <script>
+    if (window.lucide) { lucide.createIcons(); }
+  </script>
+</body>
+</html>

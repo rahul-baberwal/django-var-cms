@@ -1,0 +1,501 @@
+{% extends "var_cms/base.html" %}
+{% load var_cms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span><a href="{% var_cms_list_url app model_name %}">{{ admin.verbose_name_plural|title }}</a>
+  <span>›</span>{% if is_add %}Add{% else %}Edit{% endif %}
+{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% var_cms_list_url app model_name %}" class="btn btn-ghost btn-sm">← Back</a>
+{% endblock %}
+
+{% block content %}
+<div style="width:100%;">
+
+  {% if form.non_field_errors %}
+    <div class="alert alert-err">{{ form.non_field_errors }}</div>
+  {% endif %}
+
+
+
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Readonly fields -->
+    {% if readonly_fields %}
+    <div class="card" style="padding:18px 22px;margin-bottom:14px;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:12px;">Read-only</div>
+      <div class="form-grid">
+        {% for fname, val in readonly_fields.items %}
+        <div class="form-group">
+          <label class="field-label">{{ fname }}</label>
+          <div class="readonly-val">{{ val|safe_html }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Editable fields -->
+    <div class="card" style="padding:18px 22px;margin-bottom:14px;">
+      <div style="font-family:var(--fm);font-size:10px;color:var(--text-muted);text-transform:uppercase;letter-spacing:.7px;margin-bottom:16px;">
+        {% if is_add %}New {{ admin.verbose_name }}{% else %}Edit {{ admin.verbose_name }}{% endif %}
+      </div>
+
+      {% if form.fields %}
+      <div class="form-grid">
+        {% for field in form %}
+          {% with f_class=admin.form_field_classes|get_item:field.html_name f_grid_style=field|form_field_grid_style:admin w_type=field|field_widget_type:admin %}
+
+          {# ── Checkbox field ──────────────────────────────────── #}
+          {% if "Checkbox" in field.field.widget|stringformat:"s" and "CheckboxSelectMultiple" not in field.field.widget|stringformat:"s" %}
+            <div class="form-group-checkbox {{ f_class }}" style="display:flex;align-items:center;gap:10px;padding:8px 0;{{ f_grid_style }}">
+              {{ field }}
+              <label class="field-label" for="{{ field.id_for_label }}" style="cursor:pointer;margin-bottom:0;text-transform:none;letter-spacing:0;font-size:13px;font-weight:500;color:var(--text-dim);display:inline-flex;align-items:center;gap:4px;">
+                {{ field.label }}
+                {% if field.field.disabled %}<span class="role-lock" style="font-size:8px;">🔒 Read-only</span>{% endif %}
+              </label>
+              {% if field.help_text %}
+                <span style="font-size:11px;color:var(--text-muted);">({{ field.help_text }})</span>
+              {% endif %}
+              {% if field.errors %}
+                <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+
+          {# ── Multi-select checkbox (with optional search) ───── #}
+          {% elif w_type == "multiselect" or w_type == "multiselect_search" %}
+            <div class="form-group vcms-multi-checkbox-group {{ f_class }}" style="{{ f_grid_style }}" data-widget="{{ w_type }}">
+              <label class="field-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+                {% if field.field.disabled %}<span class="role-lock">🔒 Read-only</span>{% endif %}
+              </label>
+              {% if w_type == "multiselect_search" %}
+                <input type="text" class="vcms-checkbox-search-input" placeholder="Search…" autocomplete="off" style="margin-bottom:8px;background:var(--input);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:8px 12px;font-size:13px;font-family:var(--fb);outline:none;width:100%;transition:var(--transition);">
+              {% endif %}
+              <div class="vcms-checkbox-list">
+                {{ field }}
+              </div>
+              {% if field.help_text %}
+                <span style="font-size:11px;color:var(--text-muted);">{{ field.help_text }}</span>
+              {% endif %}
+              {% if field.errors %}
+                <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+
+          {# ── Searchable select ──────────────────────── #}
+          {% elif w_type == "select_search" %}
+            <div class="form-group vcms-searchable-group {{ f_class }}" style="{{ f_grid_style }}">
+              <label class="field-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+                {% if field.field.disabled %}<span class="role-lock">🔒 Read-only</span>{% endif %}
+              </label>
+              <div class="vcms-select-wrapper" style="position:relative;">
+                {{ field }}
+              </div>
+              {% if field.help_text %}
+                <span style="font-size:11px;color:var(--text-muted);">{{ field.help_text }}</span>
+              {% endif %}
+              {% if field.errors %}
+                <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+
+          {# ── All other fields ─────────────────────────────────── #}
+          {% else %}
+            <div class="form-group {{ f_class }}" style="{{ f_grid_style }}">
+              <label class="field-label" for="{{ field.id_for_label }}">
+                {{ field.label }}{% if field.field.required %}<span class="req">*</span>{% endif %}
+                {% if field.field.disabled %}<span class="role-lock">🔒 Read-only</span>{% endif %}
+              </label>
+
+              <!-- Rich preview for file/image fields -->
+              {% if not is_add and field.field.widget.input_type == "file" %}
+                {% var_cms_field_preview obj field.html_name as preview_html %}
+                {% if preview_html %}
+                <div style="margin-bottom:6px;">{{ preview_html|safe_html }}</div>
+                {% endif %}
+              {% endif %}
+
+              {{ field }}
+
+              {% if field.help_text %}
+                <span style="font-size:11px;color:var(--text-muted);">{{ field.help_text }}</span>
+              {% endif %}
+              {% if field.errors %}
+                <ul class="errorlist">{% for e in field.errors %}<li>{{ e }}</li>{% endfor %}</ul>
+              {% endif %}
+            </div>
+          {% endif %}
+
+          {% endwith %}
+        {% empty %}
+          <div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;padding:8px 0;">
+            No editable fields available for your role.
+          </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <p style="color:var(--text-muted);font-size:13px;">No editable fields for your current role.</p>
+      {% endif %}
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:10px;align-items:center;">
+      {% if form.fields %}
+        <button type="submit" class="btn btn-primary">
+          {% if is_add %}✓ Create{% else %}✓ Save Changes{% endif %}
+        </button>
+      {% endif %}
+      <a href="{% var_cms_list_url app model_name %}" class="btn btn-ghost">Cancel</a>
+      {% if not is_add and can_delete %}
+        <a href="{% var_cms_delete_url app model_name obj.pk %}" class="btn btn-danger" style="margin-left:auto;">
+          🗑 Delete
+        </a>
+      {% endif %}
+    </div>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_head %}
+  <style>
+    /* ── Quill editor ───────────────────────────────────────────────────── */
+    .ql-toolbar.ql-snow {
+      border: 1px solid var(--border) !important;
+      border-radius: var(--radius) var(--radius) 0 0;
+      background: var(--card2) !important;
+      padding: 8px 14px !important;
+    }
+    .ql-container.ql-snow {
+      border: 1px solid var(--border) !important;
+      border-top: none !important;
+      border-radius: 0 0 var(--radius) var(--radius);
+      background: var(--input) !important;
+      font-family: var(--fb) !important;
+      font-size: 13.5px !important;
+    }
+    .ql-editor { min-height: 220px; color: var(--text) !important; }
+    .ql-snow .ql-stroke { stroke: var(--text-dim) !important; }
+    .ql-snow .ql-fill  { fill: var(--text-dim) !important; }
+    .ql-snow .ql-picker { color: var(--text-dim) !important; }
+    .ql-snow .ql-picker-options { background-color: var(--card) !important; border-color: var(--border) !important; }
+    .ql-snow .ql-picker-item:hover, .ql-snow .ql-picker-label:hover { color: var(--accent) !important; }
+    .ql-snow .ql-picker-item.ql-selected { color: var(--accent) !important; }
+
+    /* ── Searchable select ──────────────────────────────────────────────── */
+    .vcms-searchable-select-container {
+      position: relative;
+    }
+    .vcms-search-input-overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      background: var(--input);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius);
+      padding: 11px 14px;
+      font-size: 13.5px;
+      font-family: var(--fb);
+      color: var(--text);
+      outline: none;
+      z-index: 10;
+      display: none;
+    }
+    .vcms-searchable-dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0; right: 0;
+      margin-top: 4px;
+      background: var(--card2);
+      border: 1px solid var(--border-hi);
+      border-radius: var(--radius);
+      max-height: 220px;
+      overflow-y: auto;
+      z-index: 200;
+      box-shadow: var(--shadow);
+    }
+    .vcms-searchable-dropdown.open { display: block; }
+    .vcms-dropdown-option {
+      padding: 9px 14px;
+      font-size: 13px;
+      font-family: var(--fb);
+      color: var(--text-dim);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+    .vcms-dropdown-option:hover,
+    .vcms-dropdown-option.focused { background: var(--accent-dim); color: var(--text); }
+    .vcms-dropdown-option.selected { color: var(--accent); font-weight: 600; }
+    .vcms-dropdown-empty {
+      padding: 12px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: var(--fm);
+    }
+
+    /* ── Multi-select checkbox list ─────────────────────────────────────── */
+    .vcms-checkbox-list ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-height: 220px;
+      overflow-y: auto;
+      background: var(--input);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 12px;
+    }
+    .vcms-checkbox-list ul li {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 4px;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+    .vcms-checkbox-list ul li:hover { background: var(--card2); }
+    .vcms-checkbox-list ul li label {
+      font-size: 13px;
+      color: var(--text-dim);
+      cursor: pointer;
+      font-family: var(--fb);
+      font-weight: 400;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--input);
+      cursor: pointer;
+      position: relative;
+      transition: var(--transition);
+      flex-shrink: 0;
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"]:hover { border-color: var(--accent); }
+    .vcms-checkbox-list ul li input[type="checkbox"]:checked {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"]::after {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 7px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg) scale(0);
+      transition: transform 0.12s cubic-bezier(0.12, 0.4, 0.29, 1.46);
+      top: 2px;
+      left: 5px;
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"]:checked::after { transform: rotate(45deg) scale(1); }
+    .vcms-checkbox-list[data-hidden="true"] { display: none; }
+
+    /* Search input inside multi-checkbox */
+    .vcms-checkbox-search-input:focus {
+      border-color: var(--accent) !important;
+      box-shadow: 0 0 0 3px var(--accent-dim) !important;
+    }
+
+    /* Disabled field styling */
+    .vcms-checkbox-list ul li input[type="checkbox"]:disabled ~ label,
+    .vcms-checkbox-list ul li label:has(input[type="checkbox"]:disabled),
+    .vcms-checkbox-list ul li input[type="checkbox"]:disabled + label {
+      cursor: not-allowed !important;
+      color: var(--text-muted) !important;
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"]:disabled {
+      opacity: 0.6 !important;
+      cursor: not-allowed !important;
+      background: var(--card) !important;
+      border-color: var(--border) !important;
+    }
+    .vcms-checkbox-list ul li input[type="checkbox"]:disabled::after {
+      border-color: var(--text-muted) !important;
+    }
+    .ql-container.ql-snow.vcms-quill-disabled {
+      border-top: 1px solid var(--border) !important;
+      border-radius: var(--radius) !important;
+      background: var(--card) !important;
+      opacity: 0.6;
+    }
+  </style>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // ── Quill rich text editor ───────────────────────────────────────────────
+    const editors = document.querySelectorAll('.html-editor');
+    if (editors.length > 0) {
+      const link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.snow.css';
+      document.head.appendChild(link);
+      const script = document.createElement('script');
+      script.src = 'https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js';
+      script.onload = function () {
+        editors.forEach(function (textarea) {
+          const container = document.createElement('div');
+          container.style.height = '280px';
+          textarea.style.position = 'absolute';
+          textarea.style.width = '1px';
+          textarea.style.height = '1px';
+          textarea.style.opacity = '0';
+          textarea.style.pointerEvents = 'none';
+          textarea.parentNode.insertBefore(container, textarea.nextSibling);
+          if (textarea.disabled) {
+            container.classList.add('vcms-quill-disabled');
+          }
+          const quill = new Quill(container, {
+            theme: 'snow',
+            readOnly: textarea.disabled,
+            modules: {
+              toolbar: textarea.disabled ? false : [
+                [{ 'header': [1, 2, 3, false] }],
+                ['bold', 'italic', 'underline', 'strike'],
+                ['blockquote', 'code-block'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link', 'clean']
+              ]
+            }
+          });
+          quill.root.innerHTML = textarea.value;
+          quill.on('text-change', function () { textarea.value = quill.root.innerHTML; });
+          const form = textarea.closest('form');
+          if (form) form.addEventListener('submit', function () { textarea.value = quill.root.innerHTML; });
+        });
+      };
+      document.head.appendChild(script);
+    }
+
+    // ── Searchable select ────────────────────────────────────────────────────
+    document.querySelectorAll('.vcms-searchable-select').forEach(function (selectEl) {
+      const wrapper = document.createElement('div');
+      wrapper.className = 'vcms-searchable-select-container';
+      selectEl.parentNode.insertBefore(wrapper, selectEl);
+      wrapper.appendChild(selectEl);
+      selectEl.style.display = 'none';
+
+      // Build display input
+      const displayInput = document.createElement('input');
+      displayInput.type = 'text';
+      displayInput.className = 'vcms-search-input-overlay';
+      displayInput.placeholder = 'Search or select…';
+      displayInput.style.cssText = `
+        display: block; position: relative; z-index: 1;
+        width: 100%; background: var(--input); border: 1px solid var(--border);
+        border-radius: var(--radius); padding: 11px 14px 11px 38px;
+        font-size: 13.5px; font-family: var(--fb); color: var(--text); outline: none;
+        transition: var(--transition);
+      `;
+      wrapper.style.position = 'relative';
+
+      // Add search icon
+      const iconEl = document.createElement('span');
+      iconEl.style.cssText = 'position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;z-index:2;';
+      iconEl.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>';
+      wrapper.appendChild(iconEl);
+      wrapper.appendChild(displayInput);
+
+      // Build dropdown
+      const dropdown = document.createElement('div');
+      dropdown.className = 'vcms-searchable-dropdown';
+      wrapper.appendChild(dropdown);
+
+      function buildOptions(query) {
+        dropdown.innerHTML = '';
+        const opts = Array.from(selectEl.options);
+        const filtered = query
+          ? opts.filter(o => o.text.toLowerCase().includes(query.toLowerCase()))
+          : opts;
+        if (!filtered.length) {
+          dropdown.innerHTML = '<div class="vcms-dropdown-empty">No results found</div>';
+          return;
+        }
+        filtered.forEach(function (opt) {
+          const div = document.createElement('div');
+          div.className = 'vcms-dropdown-option' + (opt.selected ? ' selected' : '');
+          div.textContent = opt.text;
+          div.dataset.value = opt.value;
+          div.addEventListener('click', function () {
+            selectEl.value = opt.value;
+            displayInput.value = opt.text;
+            dropdown.classList.remove('open');
+            displayInput.style.borderColor = 'var(--border)';
+          });
+          dropdown.appendChild(div);
+        });
+      }
+
+      // Set initial display value
+      const selectedOpt = selectEl.options[selectEl.selectedIndex];
+      if (selectedOpt) displayInput.value = selectedOpt.text;
+
+      if (selectEl.disabled) {
+        displayInput.disabled = true;
+        displayInput.style.opacity = '0.6';
+        displayInput.style.cursor = 'not-allowed';
+        displayInput.style.background = 'var(--card)';
+        displayInput.style.color = 'var(--text-dim)';
+      }
+
+      displayInput.addEventListener('focus', function () {
+        if (selectEl.disabled) return;
+        displayInput.style.borderColor = 'var(--accent)';
+        displayInput.style.boxShadow = '0 0 0 3px var(--accent-dim)';
+        buildOptions('');
+        dropdown.classList.add('open');
+      });
+      displayInput.addEventListener('input', function () { buildOptions(this.value); });
+      displayInput.addEventListener('blur', function () {
+        setTimeout(function () {
+          dropdown.classList.remove('open');
+          displayInput.style.borderColor = 'var(--border)';
+          displayInput.style.boxShadow = 'none';
+          // Restore to selected option text if cleared
+          const cur = selectEl.options[selectEl.selectedIndex];
+          if (cur && displayInput.value === '') displayInput.value = cur.text;
+        }, 180);
+      });
+    });
+
+    // ── Multi-select checkbox with search ────────────────────────────────────
+    document.querySelectorAll('.vcms-multi-checkbox-group').forEach(function (group) {
+      const searchInput = group.querySelector('.vcms-checkbox-search-input');
+      if (!searchInput) return;
+      searchInput.addEventListener('input', function () {
+        const q = this.value.toLowerCase();
+        group.querySelectorAll('.vcms-checkbox-list ul li').forEach(function (li) {
+          const label = li.querySelector('label');
+          const text = label ? label.textContent.toLowerCase() : '';
+          li.style.display = text.includes(q) ? '' : 'none';
+        });
+      });
+      searchInput.addEventListener('focus', function () {
+        this.style.borderColor = 'var(--accent)';
+        this.style.boxShadow = '0 0 0 3px var(--accent-dim)';
+      });
+      searchInput.addEventListener('blur', function () {
+        this.style.borderColor = 'var(--border)';
+        this.style.boxShadow = 'none';
+      });
+    });
+
+  });
+  </script>
+{% endblock %}

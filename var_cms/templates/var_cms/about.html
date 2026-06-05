@@ -1,0 +1,781 @@
+{% extends "var_cms/base.html" %}
+{% load var_cms_tags %}
+
+{% block title %}Help & Documentation — {{ var_cms_site.site_header }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span> Help & Documentation
+{% endblock %}
+
+{% block extra_head %}
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<style>
+  .doc-layout { display: grid; grid-template-columns: 220px 1fr; gap: 28px; align-items: start; }
+  .doc-nav { position: sticky; top: 20px; }
+  .doc-nav-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+  .doc-nav-list a { display: block; padding: 7px 14px; border-radius: 8px; font-size: 12.5px; color: var(--text-muted); text-decoration: none; font-family: var(--fb); font-weight: 500; transition: var(--transition); border-left: 2px solid transparent; }
+  .doc-nav-list a:hover { color: var(--text); background: var(--card2); border-left-color: var(--border); }
+  .doc-nav-list a.active { color: var(--accent); background: var(--accent-dim); border-left-color: var(--accent); }
+  .doc-nav-group { font-size: 10px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; font-family: var(--fm); padding: 14px 14px 4px; }
+
+  .doc-section { scroll-margin-top: 24px; margin-bottom: 40px; }
+  .doc-section h2 { font-family: var(--fh); font-size: 20px; font-weight: 700; color: var(--text); margin-bottom: 6px; padding-bottom: 10px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .doc-section h3 { font-family: var(--fh); font-size: 15px; font-weight: 700; color: var(--text); margin: 22px 0 8px; }
+  .doc-section p { color: var(--text-dim); font-size: 13.5px; line-height: 1.75; margin-bottom: 10px; }
+  .doc-section ul, .doc-section ol { color: var(--text-dim); font-size: 13.5px; line-height: 1.75; padding-left: 20px; margin-bottom: 12px; }
+  .doc-section li { margin-bottom: 4px; }
+  .doc-section li strong { color: var(--text); }
+
+  pre.doc-code { background: hsl(224, 25%, 10%); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; font-family: var(--fm); font-size: 12.5px; color: hsl(210, 25%, 80%); overflow-x: auto; margin: 10px 0 14px; line-height: 1.65; }
+  code.inline { background: var(--card2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 7px; font-family: var(--fm); font-size: 12px; color: var(--purple); }
+
+  .doc-badge { display: inline-flex; align-items: center; gap: 5px; background: var(--accent-dim); border: 1px solid hsla(250,95%,72%,0.2); color: var(--accent); border-radius: 6px; padding: 3px 10px; font-size: 11px; font-family: var(--fm); font-weight: 700; }
+  .doc-badge.green { background: hsla(142,72%,45%,0.1); border-color: hsla(142,72%,45%,0.2); color: var(--green); }
+  .doc-badge.red { background: hsla(347,87%,60%,0.1); border-color: hsla(347,87%,60%,0.2); color: var(--red); }
+  .doc-badge.amber { background: hsla(38,92%,50%,0.1); border-color: hsla(38,92%,50%,0.2); color: var(--amber); }
+
+  .perm-matrix { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 10px 0; }
+  .perm-matrix th { background: var(--card2); padding: 9px 14px; font-family: var(--fm); font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; border: 1px solid var(--border); text-align: left; }
+  .perm-matrix td { padding: 9px 14px; border: 1px solid var(--border); color: var(--text-dim); vertical-align: top; }
+  .perm-matrix td:first-child { font-family: var(--fm); color: var(--accent); font-weight: 600; }
+  .tick { color: var(--green); font-weight: 700; }
+  .cross { color: var(--text-muted); }
+
+  .callout { border-radius: 10px; padding: 13px 16px; margin: 14px 0; font-size: 13px; display: flex; gap: 10px; align-items: flex-start; }
+  .callout-info { background: hsla(199,89%,60%,0.08); border: 1px solid hsla(199,89%,60%,0.2); color: hsl(199,80%,70%); }
+  .callout-warn { background: hsla(38,92%,50%,0.08); border: 1px solid hsla(38,92%,50%,0.2); color: var(--amber); }
+  .callout-tip { background: var(--accent-dim); border: 1px solid hsla(250,95%,72%,0.2); color: var(--accent); }
+
+  .key-val { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 10px 0; }
+  .kv-item { background: var(--card2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; }
+  .kv-key { font-family: var(--fm); font-size: 11px; color: var(--text-muted); margin-bottom: 3px; }
+  .kv-val { font-size: 13px; color: var(--text); font-weight: 600; }
+
+  @media (max-width: 768px) { .doc-layout { grid-template-columns: 1fr; } .doc-nav { display: none; } .key-val { grid-template-columns: 1fr; } }
+
+  .developer-card {
+    transition: var(--transition);
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+  }
+  .developer-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px var(--accent-glow);
+    border-color: var(--accent);
+  }
+  .developer-card .dev-avatar {
+    transition: var(--transition);
+  }
+  .developer-card:hover .dev-avatar {
+    background: var(--accent) !important;
+    color: #fff !important;
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .noto-emoji { display: inline-block; vertical-align: middle; margin-right: 8px; width: 26px; height: 26px; }
+  .noto-emoji img { width: 100%; height: 100%; object-fit: contain; }
+
+  #back-to-top-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border);
+    background: var(--card-glass);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 999;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  #back-to-top-btn:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px var(--accent-glow);
+  }
+  #back-to-top-btn:hover i {
+    transform: translateY(-2px);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="doc-layout">
+
+  <!-- ── Sidebar nav ── -->
+  <nav class="doc-nav card" style="padding: 12px 8px;">
+    <div class="doc-nav-group">Getting Started</div>
+    <ul class="doc-nav-list">
+      <li><a href="#setup">Installation & Setup</a></li>
+      <li><a href="#settings">settings.py Config</a></li>
+      <li><a href="#register">Register Models</a></li>
+    </ul>
+    <div class="doc-nav-group">Access Control</div>
+    <ul class="doc-nav-list">
+      <li><a href="#roles">How Roles Work</a></li>
+      <li><a href="#create-roles">Creating Roles</a></li>
+      <li><a href="#assign-users">Assigning Users</a></li>
+      <li><a href="#security">Security</a></li>
+    </ul>
+    <div class="doc-nav-group">Form Builder</div>
+    <ul class="doc-nav-list">
+      <li><a href="#widths">Column Widths</a></li>
+      <li><a href="#rows">Row Grouping</a></li>
+      <li><a href="#dropdowns">Dropdown Types</a></li>
+      <li><a href="#misc">Placeholders & Help</a></li>
+    </ul>
+    <div class="doc-nav-group">Dashboard</div>
+    <ul class="doc-nav-list">
+      <li><a href="#cards">Dashboard Cards</a></li>
+      <li><a href="#branding">Branding</a></li>
+    </ul>
+  </nav>
+
+  <!-- ── Main content ── -->
+  <div>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="setup">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f680/512.gif" alt="🚀"></picture>Installation & Setup</h2>
+
+      <h3>1. Install</h3>
+      <pre class="doc-code">pip install django-var-cms pillow whitenoise</pre>
+
+      <h3>2. Add to INSTALLED_APPS</h3>
+      <pre class="doc-code">INSTALLED_APPS = [
+    ...
+    "var_cms",
+]</pre>
+
+      <h3>3. Add URLs</h3>
+      <pre class="doc-code">from django.urls import path, include
+from django.conf.urls.static import static
+
+urlpatterns = [
+    path("var-cms/", include("var_cms.urls", namespace="var_cms")),
+]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)</pre>
+
+      <h3>4. Set login redirect</h3>
+      <pre class="doc-code">LOGIN_URL          = "/var-cms/login/"
+LOGIN_REDIRECT_URL = "/var-cms/"</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="settings">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2699_fe0f/512.gif" alt="⚙️"></picture>settings.py Configuration</h2>
+      <p>Put all global CMS config in your <code class="inline">settings.py</code> using the <code class="inline">VAR_CMS_</code> prefix. Your <code class="inline">var_cms_admin.py</code> files should only contain model registrations.</p>
+
+      <pre class="doc-code"># settings.py
+
+VAR_CMS_SITE_HEADER  = "My App"          # Top-left brand name
+VAR_CMS_SITE_SUB     = "ADMIN PANEL"     # Subtitle under brand
+VAR_CMS_SITE_URL     = "https://myapp.com"
+VAR_CMS_LOGO_URL     = "/static/logo.png"
+VAR_CMS_ACCENT_COLOR = "250, 95%, 72%"   # HSL e.g. purple
+VAR_CMS_ENABLE_OTP   = False             # True to require email OTP on login
+
+VAR_CMS_USERNAME_FIELD = "email"         # if your user model uses email as login
+
+# Dashboard card visibility (optional)
+VAR_CMS_HIDDEN_DASHBOARD_CARDS = ["logentry", "demo.category"]
+VAR_CMS_SHOWN_DASHBOARD_CARDS  = ["invoice", "customer"]  # show ONLY these
+
+# Developer credits shown in Help page
+VAR_CMS_DEVELOPER_NAME     = "Your Name"
+VAR_CMS_DEVELOPER_EMAIL    = "you@example.com"
+VAR_CMS_DEVELOPER_WEBSITE  = "https://example.com"
+VAR_CMS_DEVELOPER_GITHUB   = "https://github.com/yourname"
+VAR_CMS_DEVELOPER_IMAGE    = "https://example.com/avatar.png"</pre>
+
+      <div class="callout callout-tip">
+        <picture class="noto-emoji" style="width: 18px; height: 18px; margin-right: 6px;"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" alt="💡"></picture> All VAR_CMS_* settings are optional. Built-in defaults will be used for any key you omit.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="register">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4da/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4da/512.gif" alt="📚"></picture>Register Models</h2>
+      <p>Create <code class="inline">var_cms_admin.py</code> in any app. It is auto-discovered on startup. Only put model-related config here.</p>
+
+      <pre class="doc-code">from var_cms.registry import var_cms_site, VarCMSModelAdmin
+from var_cms.permissions import RolePermission, UserPermission
+from .models import Invoice, Customer
+
+class InvoiceAdmin(VarCMSModelAdmin):
+    # ── List view ─────────────────────────────────────────────
+    list_display    = ["number", "customer", "amount", "status", "created_at"]
+    list_filter     = ["status"]
+    search_fields   = ["number", "customer__name"]
+    ordering        = ["-created_at"]
+    list_per_page   = 30
+    icon            = "file-invoice"       # Lucide icon name
+
+    # ── Always read-only ──────────────────────────────────────
+    readonly_fields = ["created_at", "updated_at"]
+
+    # ── Hide from form entirely ───────────────────────────────
+    exclude_fields  = ["internal_notes"]
+
+    # ── Permissions ───────────────────────────────────────────
+    permissions = [
+        RolePermission("superuser", add=True,  list=True, view=True, edit=True,  delete=True),
+        RolePermission("manager",   add=True,  list=True, view=True, edit=True,  delete=False),
+        RolePermission("viewer",    add=False, list=True, view=True, edit=False, delete=False),
+        UserPermission("alice",     add=True,  list=True, view=True, edit=True,  delete=True),
+    ]
+
+    # ── What each role can edit ────────────────────────────────
+    role_editable_fields = {
+        "superuser": "__all__",
+        "manager":   ["status", "amount", "due_date"],
+    }
+
+var_cms_site.register(Invoice, InvoiceAdmin)
+var_cms_site.register(Customer)</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="roles">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.gif" alt="🔒"></picture>How Roles Work</h2>
+      <p>Roles in django-var-cms map directly to <strong>Django Groups</strong>. A user's group name becomes their role name inside the CMS.</p>
+
+      <table class="perm-matrix">
+        <thead>
+          <tr><th>Concept</th><th>Django Equivalent</th><th>How it's used</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Role</td><td>Group</td><td>The group name string is matched against <code class="inline">RolePermission("role_name", ...)</code></td></tr>
+          <tr><td>Superuser</td><td><code class="inline">is_superuser=True</code></td><td>Always resolves to the <code class="inline">"superuser"</code> role</td></tr>
+          <tr><td>Per-user override</td><td>Username match</td><td><code class="inline">UserPermission("alice", ...)</code> matches by username exactly</td></tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-warn">
+        <picture class="noto-emoji" style="width: 18px; height: 18px; margin-right: 6px;"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/26a0_fe0f/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/26a0_fe0f/512.gif" alt="⚠️"></picture> If a user belongs to multiple groups, the <strong>first group</strong> that matches a defined permission role is used.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="create-roles">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/2795/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2795/512.gif" alt="➕"></picture>Creating Roles (Groups)</h2>
+      <p>A "role" is simply a Django Group. Create them via Django Admin:</p>
+      <ol>
+        <li>Go to <strong>/admin/auth/group/add/</strong></li>
+        <li>Enter a name, e.g. <code class="inline">manager</code></li>
+        <li>Save (no need to assign Django permissions — var-cms handles its own)</li>
+        <li>Reference the same name in your <code class="inline">RolePermission</code></li>
+      </ol>
+
+      <pre class="doc-code">from var_cms.permissions import RolePermission
+
+permissions = [
+    RolePermission("manager",   add=True,  list=True, view=True, edit=True,  delete=False),
+    RolePermission("accountant", add=False, list=True, view=True, edit=False, delete=False),
+]</pre>
+
+      <div class="callout callout-info">
+        <picture class="noto-emoji" style="width: 18px; height: 18px; margin-right: 6px;"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" alt="💡"></picture> You can also create groups programmatically in a migration or management command:<br>
+        <code class="inline">Group.objects.get_or_create(name="manager")</code>
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="assign-users">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f91d/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f91d/512.gif" alt="🤝"></picture>Assigning Users to Roles</h2>
+      <p>Assign a user to a group in Django Admin:</p>
+      <ol>
+        <li>Go to <strong>/admin/auth/user/</strong> → click a user</li>
+        <li>Scroll to <strong>Groups</strong> section</li>
+        <li>Select your group (e.g. <code class="inline">manager</code>) and save</li>
+      </ol>
+      <p>That user will now have the permissions you defined in <code class="inline">RolePermission("manager", ...)</code>.</p>
+
+      <h3>Per-user override (no group needed)</h3>
+      <p>If you want to grant one specific user extra access independently of their group, use <code class="inline">UserPermission</code>:</p>
+      <pre class="doc-code">from var_cms.permissions import UserPermission
+
+permissions = [
+    RolePermission("viewer", add=False, list=True, view=True, edit=False, delete=False),
+    UserPermission("alice",  add=True,  list=True, view=True, edit=True,  delete=True),
+    # alice gets full access even though she may be in the viewer group
+]</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="security">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f512/512.gif" alt="🔒"></picture>Security</h2>
+
+      <h3>Authentication</h3>
+      <ul>
+        <li>All CMS views require <strong>login</strong> — unauthenticated users are redirected to the login page.</li>
+        <li>Optional <strong>OTP 2FA</strong> (email-based 6-digit code) via <code class="inline">VAR_CMS_ENABLE_OTP = True</code>.</li>
+        <li>Passwords are hashed using Django's standard PBKDF2 algorithm.</li>
+      </ul>
+
+      <h3>Authorization</h3>
+      <ul>
+        <li>Every view (<code class="inline">add / list / view / edit / delete</code>) checks permission before rendering.</li>
+        <li>Unauthorized access raises <code class="inline">PermissionDenied</code> (HTTP 403), never silently redirects.</li>
+        <li>Edit button is shown as <strong>disabled</strong> (not hidden) in the list view so users understand the restriction.</li>
+        <li>Field-level: <code class="inline">role_editable_fields</code> restricts which fields each role may modify on the form.</li>
+        <li><code class="inline">readonly_fields</code> are always non-editable regardless of role.</li>
+      </ul>
+
+      <h3>CSRF & XSS</h3>
+      <ul>
+        <li>All forms include Django's <strong>CSRF token</strong>.</li>
+        <li>All output is auto-escaped by Django's template engine. Only explicitly marked safe values (file previews, icons) bypass escaping.</li>
+      </ul>
+
+      <h3>File Uploads</h3>
+      <ul>
+        <li>Files are validated by Django's <code class="inline">ImageField</code> / <code class="inline">FileField</code>.</li>
+        <li>Uploads go to your configured <code class="inline">MEDIA_ROOT</code> — never executed as code.</li>
+        <li>Image crop and convert endpoints require login and operate only on files already in <code class="inline">MEDIA_ROOT</code>.</li>
+      </ul>
+
+      <div class="callout callout-warn">
+        <picture class="noto-emoji" style="width: 18px; height: 18px; margin-right: 6px;"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/26a0_fe0f/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/26a0_fe0f/512.gif" alt="⚠️"></picture> Always run with <code class="inline">DEBUG = False</code> in production and set a strong <code class="inline">SECRET_KEY</code>. Use HTTPS to protect sessions.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="widths">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.gif" alt="💻"></picture>Form Column Widths</h2>
+      <p>Use <code class="inline">form_field_widths</code> to set how wide each field is in the 12-column grid.</p>
+
+      <table class="perm-matrix">
+        <thead><tr><th>Value</th><th>Columns</th><th>Typical use</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">"full"</code></td><td>12 / 12</td><td>Textarea, rich text, addresses</td></tr>
+          <tr><td><code class="inline">"half"</code></td><td>6 / 12</td><td>Default for most fields</td></tr>
+          <tr><td><code class="inline">"one-third"</code></td><td>4 / 12</td><td>Status, category, short codes</td></tr>
+          <tr><td><code class="inline">"two-thirds"</code></td><td>8 / 12</td><td>Title, description</td></tr>
+          <tr><td><code class="inline">"one-fourth"</code></td><td>3 / 12</td><td>Compact numeric fields</td></tr>
+          <tr><td><code class="inline">"three-fourths"</code></td><td>9 / 12</td><td>Wide + companion narrow</td></tr>
+        </tbody>
+      </table>
+
+      <pre class="doc-code">class InvoiceAdmin(VarCMSModelAdmin):
+    form_field_widths = {
+        "title":  "two-thirds",
+        "status": "one-third",
+        "notes":  "full",
+    }</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="rows">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4bb/512.gif" alt="💻"></picture>Row Grouping</h2>
+      <p>Use <code class="inline">form_field_rows</code> to place multiple fields side-by-side in one visual row. Fields in the same row split the width equally.</p>
+
+      <pre class="doc-code">class CustomerAdmin(VarCMSModelAdmin):
+    form_field_rows = [
+        ["first_name", "last_name"],           # 2 cols → each takes half
+        ["mobile", "email", "date_of_birth"],  # 3 cols → each takes one-third
+        ["city", "state", "country", "pin"],   # 4 cols → each takes one-fourth
+    ]</pre>
+
+      <div class="callout callout-tip">
+        <picture class="noto-emoji" style="width: 18px; height: 18px; margin-right: 6px;"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4a1/512.gif" alt="💡"></picture> <code class="inline">form_field_rows</code> takes priority over <code class="inline">form_field_widths</code> for listed fields.
+      </div>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="dropdowns">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f447/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f447/512.gif" alt="👇"></picture>Dropdown Widget Types</h2>
+      <p>Use <code class="inline">form_field_widgets</code> to control the dropdown style per field.</p>
+
+      <table class="perm-matrix">
+        <thead><tr><th>Value</th><th>Renders as</th><th>Best for</th></tr></thead>
+        <tbody>
+          <tr><td><code class="inline">"select"</code></td><td>Standard HTML select</td><td>Short choice lists (default)</td></tr>
+          <tr><td><code class="inline">"select_search"</code></td><td>Searchable dropdown</td><td>ForeignKey with many options</td></tr>
+          <tr><td><code class="inline">"multiselect"</code></td><td>Checkbox list</td><td>ManyToManyField</td></tr>
+          <tr><td><code class="inline">"multiselect_search"</code></td><td>Checkbox list + search</td><td>ManyToManyField with many items</td></tr>
+        </tbody>
+      </table>
+
+      <pre class="doc-code">class OrderAdmin(VarCMSModelAdmin):
+    form_field_widgets = {
+        "status":   "select",             # plain dropdown (default)
+        "customer": "select_search",      # searchable dropdown
+        "tags":     "multiselect_search", # checkbox list with search
+    }</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="misc">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/270f_fe0f/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/270f_fe0f/512.gif" alt="✏️"></picture>Placeholders & Help Text</h2>
+      <pre class="doc-code">class ArticleAdmin(VarCMSModelAdmin):
+    form_field_placeholders = {
+        "title": "Enter the article headline…",
+        "slug":  "auto-generated-from-title",
+    }
+    form_field_help_texts = {
+        "slug":  "URL-safe identifier. Leave blank to auto-generate.",
+        "body":  "Supports full HTML via the Quill editor.",
+    }
+    # HTML rich text editor on specific fields:
+    html_fields = ["body", "description"]
+    # Regex pattern validation:
+    regex_validators = {
+        "slug": (r"^[a-z0-9-]+$", "Only lowercase letters, numbers, hyphens."),
+    }</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="cards">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f4ca/512.gif" alt="📊"></picture>Dashboard Cards</h2>
+      <p>By default, dashboard cards are hidden (<code>dashboard_card = False</code>). Set it to <code>True</code> explicitly to show them, or configure globally in <code>settings.py</code>.</p>
+
+      <h3>Per model: show or hide from dashboard</h3>
+      <pre class="doc-code"># Per model: show on dashboard (default is False, so set True to show)
+class InvoiceAdmin(VarCMSModelAdmin):
+    dashboard_card = True   # will appear on dashboard
+
+# Per model: hide from dashboard (default)
+class LogAdmin(VarCMSModelAdmin):
+    dashboard_card = False  # won't appear on dashboard</pre>
+
+      <h3>Globally in settings.py</h3>
+      <pre class="doc-code"># settings.py
+
+# Hide specific cards:
+VAR_CMS_HIDDEN_DASHBOARD_CARDS = ["logentry", "demo.category"]
+
+# Show ONLY these cards:
+VAR_CMS_SHOWN_DASHBOARD_CARDS  = ["invoice", "customer"]  # show ONLY these</pre>
+
+      <h3>Custom card buttons</h3>
+      <pre class="doc-code">class InvoiceAdmin(VarCMSModelAdmin):
+    card_buttons = [
+        {"label": "All Invoices", "action": "list"},
+        {"label": "New Invoice",  "action": "add"},
+        {"label": "Reports",      "url": "/reports/", "class": "btn-ghost"},
+    ]</pre>
+    </section>
+
+    <!-- ════════════════════════════════════════════════════════ -->
+    <section class="doc-section" id="branding">
+      <h2><picture class="noto-emoji"><source srcset="https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.webp" type="image/webp"><img src="https://fonts.gstatic.com/s/e/notoemoji/latest/2728/512.gif" alt="✨"></picture>Branding</h2>
+      <pre class="doc-code"># settings.py
+VAR_CMS_SITE_HEADER  = "VAR CMS"
+VAR_CMS_SITE_SUB     = "CONTROL PANEL"
+VAR_CMS_LOGO_URL     = "/static/myapp/logo.png"
+VAR_CMS_ACCENT_COLOR = "142, 72%, 45%"   # Emerald green</pre>
+
+      <p>Accent color is an <strong>HSL triplet</strong> (hue, saturation%, lightness%) — e.g. purple is <code class="inline">250, 95%, 72%</code>, teal is <code class="inline">180, 60%, 50%</code>.</p>
+
+      <div class="card" style="padding: 24px; margin-top: 20px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; text-align: left;">
+        <h3 style="margin-top: 0; margin-bottom: 8px; font-size: 15px; font-family: var(--fh); font-weight: 700; color: var(--text);">Live Accent Color Theme Preview</h3>
+        <p style="font-size: 12.5px; color: var(--text-dim); margin-bottom: 16px; line-height: 1.6;">
+          Pick a custom color or choose one of our harmonized presets to see the entire CMS theme adapt immediately. Once you find a look you love, copy the configuration snippet below for your <code class="inline">settings.py</code>.
+        </p>
+
+        <!-- Presets -->
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 18px;">
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; font-family: var(--fb); margin-right: 4px;">Presets:</span>
+          <button type="button" class="theme-preset" data-hsl="250, 95%, 72%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(250, 95%, 72%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Classic Purple"></button>
+          <button type="button" class="theme-preset" data-hsl="142, 72%, 45%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(142, 72%, 45%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Emerald Green"></button>
+          <button type="button" class="theme-preset" data-hsl="199, 89%, 60%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(199, 89%, 60%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Ocean Blue"></button>
+          <button type="button" class="theme-preset" data-hsl="38, 92%, 50%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(38, 92%, 50%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Amber Sunset"></button>
+          <button type="button" class="theme-preset" data-hsl="347, 87%, 60%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(347, 87%, 60%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Coral Red"></button>
+          <button type="button" class="theme-preset" data-hsl="290, 85%, 65%" style="width: 24px; height: 24px; border-radius: 50%; background: hsl(290, 85%, 65%); border: 2px solid transparent; cursor: pointer; transition: var(--transition);" title="Orchid Pink"></button>
+        </div>
+
+        <!-- Custom picker -->
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 20px;">
+          <span style="font-size: 12px; color: var(--text-muted); font-weight: 600; font-family: var(--fb);">Custom:</span>
+          <input type="color" id="theme-color-picker" style="border: none; width: 48px; height: 32px; border-radius: 6px; background: transparent; cursor: pointer; padding: 0;">
+          <span id="theme-color-hsl-display" style="font-family: var(--fm); font-size: 12.5px; color: var(--accent); font-weight: 700;">250, 95%, 72%</span>
+        </div>
+
+        <!-- Generated code snippet -->
+        <div style="position: relative;">
+          <pre class="doc-code" style="margin: 0; background: hsl(224, 25%, 6%); border-color: var(--border); font-family: var(--fm); font-size: 12.5px; padding: 16px 18px; color: hsl(210, 25%, 80%); overflow-x: auto; border-radius: 8px;" id="theme-code-block">VAR_CMS_ACCENT_COLOR = "250, 95%, 72%"</pre>
+          <button type="button" id="copy-theme-btn" style="position: absolute; right: 12px; top: 12px; padding: 6px; background: var(--card2); border: 1px solid var(--border); color: var(--text-dim); border-radius: 6px; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center;" title="Copy code"><i data-lucide="copy" style="width: 14px; height: 14px;"></i></button>
+        </div>
+      </div>
+    </section>
+
+    <div class="card developer-card" style="padding: 18px 22px; margin-top: 8px; display:flex; align-items:center; gap:16px;">
+      <div class="dev-avatar" style="width:42px;height:42px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;color:var(--accent);font-weight:800;font-family:var(--fh);font-size:18px;flex-shrink:0;overflow:hidden;border:1px solid var(--border);">
+        <lottie-player src="https://fonts.gstatic.com/s/e/notoemoji/latest/1f60e/lottie.json" background="transparent" speed="1" style="width: 32px; height: 32px;" loop autoplay></lottie-player>
+      </div>
+      <div>
+        <div style="font-weight:700;color:var(--text);font-size:14px;">{{ var_cms_site.developer_name }}</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">
+          <a href="{{ var_cms_site.developer_website }}" target="_blank" style="color:var(--accent);text-decoration:none;">{{ var_cms_site.developer_website }}</a>
+          &nbsp;·&nbsp;
+          <a href="mailto:{{ var_cms_site.developer_email }}" style="color:var(--text-muted);text-decoration:none;">{{ var_cms_site.developer_email }}</a>
+        </div>
+      </div>
+      <div style="margin-left:auto;display:flex;gap:8px;">
+        {% if var_cms_site.developer_github %}
+          <a href="{{ var_cms_site.developer_github }}" target="_blank" class="btn btn-ghost btn-sm">GitHub</a>
+        {% endif %}
+        {% if var_cms_site.developer_linkedin %}
+          <a href="{{ var_cms_site.developer_linkedin }}" target="_blank" class="btn btn-ghost btn-sm">LinkedIn</a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Back to Top Button -->
+    <button type="button" id="back-to-top-btn" title="Go to top">
+      <i data-lucide="arrow-up"></i>
+    </button>
+
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Highlight active nav link on scroll
+const sections = document.querySelectorAll('.doc-section');
+const navLinks = document.querySelectorAll('.doc-nav-list a');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(a => a.classList.remove('active'));
+      const match = document.querySelector(`.doc-nav-list a[href="#${e.target.id}"]`);
+      if (match) match.classList.add('active');
+    }
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+sections.forEach(s => observer.observe(s));
+
+// Live Theme Preview Logic
+const presets = document.querySelectorAll('.theme-preset');
+const picker = document.getElementById('theme-color-picker');
+const display = document.getElementById('theme-color-hsl-display');
+const codeBlock = document.getElementById('theme-code-block');
+const copyBtn = document.getElementById('copy-theme-btn');
+
+function updateTheme(hslStr) {
+  document.documentElement.style.setProperty('--accent', `hsl(${hslStr})`);
+  document.documentElement.style.setProperty('--accent-dim', `hsla(${hslStr}, 0.12)`);
+  document.documentElement.style.setProperty('--accent-glow', `hsla(${hslStr}, 0.25)`);
+  
+  if (display) display.textContent = hslStr;
+  if (codeBlock) codeBlock.textContent = `VAR_CMS_ACCENT_COLOR = "${hslStr}"`;
+
+  // Highlight active preset
+  presets.forEach(p => {
+    if (p.getAttribute('data-hsl') === hslStr) {
+      p.style.borderColor = 'var(--text)';
+      p.style.transform = 'scale(1.15)';
+    } else {
+      p.style.borderColor = 'transparent';
+      p.style.transform = 'none';
+    }
+  });
+}
+
+function hexToHsl(hex) {
+  let r = parseInt(hex.slice(1, 3), 16) / 255;
+  let g = parseInt(hex.slice(3, 5), 16) / 255;
+  let b = parseInt(hex.slice(5, 7), 16) / 255;
+
+  let max = Math.max(r, g, b), min = Math.min(r, g, b);
+  let h, s, l = (max + min) / 2;
+
+  if (max === min) {
+    h = s = 0;
+  } else {
+    let d = max - min;
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+      case g: h = (b - r) / d + 2; break;
+      case b: h = (r - g) / d + 4; break;
+    }
+    h /= 6;
+  }
+
+  return [Math.round(h * 360), Math.round(s * 100), Math.round(l * 100)];
+}
+
+function hslToHex(h, s, l) {
+  l /= 100;
+  const a = s * Math.min(l, 1 - l) / 100;
+  const f = n => {
+    const k = (n + h / 30) % 12;
+    const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+    return Math.round(255 * color).toString(16).padStart(2, '0');
+  };
+  return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+// Init HSL from Django var_cms_accent_color or fallback
+const initialHsl = "{{ var_cms_accent_color|default:'250, 95%, 72%' }}";
+updateTheme(initialHsl);
+
+// Set picker initial hex
+try {
+  const parts = initialHsl.split(',').map(p => parseInt(p.trim()));
+  if (parts.length === 3) {
+    picker.value = hslToHex(parts[0], parts[1], parts[2]);
+  }
+} catch (e) {
+  picker.value = "#9b66ff";
+}
+
+// Events
+presets.forEach(btn => {
+  btn.addEventListener('click', () => {
+    const hsl = btn.getAttribute('data-hsl');
+    updateTheme(hsl);
+    const parts = hsl.split(',').map(p => parseInt(p.trim()));
+    picker.value = hslToHex(parts[0], parts[1], parts[2]);
+  });
+});
+
+if (picker) {
+  picker.addEventListener('input', (e) => {
+    const [h, s, l] = hexToHsl(e.target.value);
+    const adjustedL = Math.max(45, Math.min(l, 85));
+    updateTheme(`${h}, ${s}%, ${adjustedL}%`);
+  });
+}
+
+if (copyBtn) {
+  copyBtn.addEventListener('mouseenter', () => {
+    copyBtn.style.background = 'var(--accent-dim)';
+    copyBtn.style.color = 'var(--accent)';
+    copyBtn.style.borderColor = 'var(--accent)';
+  });
+  copyBtn.addEventListener('mouseleave', () => {
+    copyBtn.style.background = 'var(--card2)';
+    copyBtn.style.color = 'var(--text-dim)';
+    copyBtn.style.borderColor = 'var(--border)';
+  });
+  
+  copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(codeBlock.textContent).then(() => {
+      copyBtn.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: var(--green);"></i>';
+      setTimeout(() => {
+        copyBtn.innerHTML = '<i data-lucide="copy" style="width: 14px; height: 14px;"></i>';
+        if (window.lucide) window.lucide.createIcons();
+      }, 2000);
+      if (window.lucide) window.lucide.createIcons();
+    });
+  });
+}
+
+const devCard = document.querySelector('.developer-card');
+if (devCard) {
+  devCard.addEventListener('click', (e) => {
+    if (!e.target.closest('a')) {
+      window.open('{{ var_cms_site.developer_website }}', '_blank');
+    }
+  });
+}
+
+// Fallback for broken/failing animated emojis - shows the normal unicode emoji instead
+document.addEventListener('error', function(e) {
+  if (e.target.tagName.toLowerCase() === 'img' && e.target.closest('.noto-emoji')) {
+    const img = e.target;
+    const picture = img.closest('picture');
+    const alt = img.getAttribute('alt');
+    if (picture && alt) {
+      const textNode = document.createTextNode(alt);
+      picture.parentNode.insertBefore(textNode, picture);
+      picture.remove();
+    }
+  }
+}, true);
+
+// Back to Top functionality
+const backToTopBtn = document.getElementById('back-to-top-btn');
+const scrollContainer = document.querySelector('.main');
+if (backToTopBtn && scrollContainer) {
+  scrollContainer.addEventListener('scroll', () => {
+    if (scrollContainer.scrollTop > 300) {
+      backToTopBtn.style.opacity = '1';
+      backToTopBtn.style.pointerEvents = 'auto';
+    } else {
+      backToTopBtn.style.opacity = '0';
+      backToTopBtn.style.pointerEvents = 'none';
+    }
+  });
+  backToTopBtn.addEventListener('click', () => {
+    scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+}
+
+// Automatic Copy Button for all pre.doc-code elements (except the theme code block)
+document.querySelectorAll('pre.doc-code:not(#theme-code-block)').forEach(pre => {
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'relative';
+  wrapper.className = 'code-wrapper';
+  
+  pre.parentNode.insertBefore(wrapper, pre);
+  wrapper.appendChild(pre);
+  
+  const button = document.createElement('button');
+  button.type = 'button';
+  button.className = 'copy-code-btn';
+  button.innerHTML = '<i data-lucide="copy" style="width: 14px; height: 14px;"></i>';
+  button.title = 'Copy code';
+  
+  Object.assign(button.style, {
+    position: 'absolute',
+    right: '10px',
+    top: '10px',
+    background: 'var(--card2)',
+    border: '1px solid var(--border)',
+    borderRadius: '6px',
+    color: 'var(--text-dim)',
+    padding: '6px',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: '5'
+  });
+  
+  button.addEventListener('mouseenter', () => {
+    button.style.background = 'var(--accent-dim)';
+    button.style.color = 'var(--accent)';
+    button.style.borderColor = 'var(--accent)';
+  });
+  button.addEventListener('mouseleave', () => {
+    button.style.background = 'var(--card2)';
+    button.style.color = 'var(--text-dim)';
+    button.style.borderColor = 'var(--border)';
+  });
+  
+  button.addEventListener('click', () => {
+    const codeText = pre.innerText || pre.textContent;
+    navigator.clipboard.writeText(codeText.trim()).then(() => {
+      button.innerHTML = '<i data-lucide="check" style="width: 14px; height: 14px; color: var(--green);"></i>';
+      setTimeout(() => {
+        button.innerHTML = '<i data-lucide="copy" style="width: 14px; height: 14px;"></i>';
+        if (window.lucide) window.lucide.createIcons();
+      }, 2000);
+      if (window.lucide) window.lucide.createIcons();
+    });
+  });
+  
+  wrapper.appendChild(button);
+});
+if (window.lucide) window.lucide.createIcons();
+</script>
+{% endblock %}

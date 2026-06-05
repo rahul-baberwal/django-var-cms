@@ -1,0 +1,41 @@
+{% extends "cms_core/base.html" %}
+{% load cms_tags %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:28px;">
+  <p style="color:var(--text-muted);font-size:13px;">Welcome back, <strong style="color:var(--text);">{{ request.user }}</strong>. Here's your content overview.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:32px;">
+  {% for item in registry %}
+  <a href="{{ item.url }}" style="text-decoration:none;">
+    <div class="stat-card" style="transition:border-color .15s;" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
+      <div class="stat-val">{{ item.count }}</div>
+      <div class="stat-label">{{ item.verbose_name_plural|upper }}</div>
+      <div style="margin-top:12px;font-size:11px;color:var(--accent);font-family:var(--font-mono);">{{ item.app }}.{{ item.model_name }} →</div>
+    </div>
+  </a>
+  {% empty %}
+  <div style="grid-column:1/-1;color:var(--text-muted);font-size:13px;padding:20px 0;">
+    No models registered yet. Create a <code style="font-family:var(--font-mono);background:var(--border);padding:2px 5px;border-radius:4px;">cms_admin.py</code> in your app and register models with <code style="font-family:var(--font-mono);background:var(--border);padding:2px 5px;border-radius:4px;">cms_site.register()</code>.
+  </div>
+  {% endfor %}
+</div>
+
+<div class="card" style="padding:20px 24px;">
+  <div style="font-family:var(--font-mono);font-size:11px;color:var(--text-muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.8px;">Quick Start</div>
+  <pre style="font-family:var(--font-mono);font-size:12px;color:var(--text-dim);line-height:1.8;overflow-x:auto;"><code><span style="color:#6c63ff">from</span> cms_core.registry <span style="color:#6c63ff">import</span> cms_site, CMSModelAdmin
+
+<span style="color:#22c55e">class</span> <span style="color:#f59e0b">ArticleAdmin</span>(CMSModelAdmin):
+    list_display  = [<span style="color:#a78bfa">"title"</span>, <span style="color:#a78bfa">"author"</span>, <span style="color:#a78bfa">"status"</span>, <span style="color:#a78bfa">"created_at"</span>]
+    list_filter   = [<span style="color:#a78bfa">"status"</span>, <span style="color:#a78bfa">"category"</span>]
+    search_fields = [<span style="color:#a78bfa">"title"</span>, <span style="color:#a78bfa">"body"</span>]
+    allow_delete  = <span style="color:#ef4444">True</span>
+    allow_edit    = <span style="color:#ef4444">True</span>
+    ordering      = [<span style="color:#a78bfa">"-created_at"</span>]
+
+cms_site.register(Article, ArticleAdmin)</code></pre>
+</div>
+{% endblock %}

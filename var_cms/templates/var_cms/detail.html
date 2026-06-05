@@ -1,0 +1,41 @@
+{% extends "var_cms/base.html" %}
+{% load var_cms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span><a href="{% var_cms_list_url app model_name %}">{{ admin.verbose_name_plural|title }}</a>
+  <span>›</span>View
+{% endblock %}
+
+{% block topbar_actions %}
+  <a href="{% var_cms_list_url app model_name %}" class="btn btn-ghost btn-sm">← Back</a>
+  {% if can_edit %}
+    <a href="{% var_cms_edit_url app model_name obj.pk %}" class="btn btn-primary btn-sm">Edit</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="max-width:800px;">
+  <div class="card" style="padding:22px 26px;">
+    <div style="font-family:var(--fh);font-size:18px;font-weight:800;margin-bottom:18px;">{{ obj }}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;">
+      {% for label, val in fields %}
+      <div style="padding:10px 0;border-bottom:1px solid var(--border);display:contents;">
+        <div style="padding:10px 12px 10px 0;font-size:11px;font-family:var(--fm);color:var(--text-muted);text-transform:uppercase;letter-spacing:.5px;border-bottom:1px solid var(--border);">{{ label }}</div>
+        <div style="padding:10px 0 10px 12px;font-size:13px;border-bottom:1px solid var(--border);">{{ val|safe_html }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div style="margin-top:18px;display:flex;gap:8px;">
+      {% if can_edit %}
+        <a href="{% var_cms_edit_url app model_name obj.pk %}" class="btn btn-primary btn-sm">✏ Edit</a>
+      {% endif %}
+      {% if can_delete %}
+        <a href="{% var_cms_delete_url app model_name obj.pk %}" class="btn btn-danger btn-sm">🗑 Delete</a>
+      {% endif %}
+      <a href="{% var_cms_list_url app model_name %}" class="btn btn-ghost btn-sm">← Back to list</a>
+    </div>
+  </div>
+</div>
+{% endblock %}

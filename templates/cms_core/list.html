@@ -1,0 +1,150 @@
+{% extends "cms_core/base.html" %}
+{% load cms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span> <a href="#">{{ app }}</a>
+  <span>›</span> {{ title }}
+{% endblock %}
+
+{% block topbar_actions %}
+  {% if admin.allow_add %}
+    <a href="{% cms_add_url app model_name %}" class="btn btn-primary">
+      <span>+</span> Add {{ admin.verbose_name }}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Search + filters -->
+<div class="card" style="padding:16px 18px;margin-bottom:16px;">
+  <form method="get" style="display:flex;flex-direction:column;gap:12px;">
+
+    {% if admin.search_fields %}
+    <div class="search-bar">
+      <input type="text" name="q" value="{{ search_query }}" placeholder="Search {{ admin.verbose_name_plural }}…" class="search-input">
+      <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+      {% if search_query %}
+        <a href="?" class="btn btn-ghost btn-sm">Clear</a>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {% if filter_widgets %}
+    <div class="filters">
+      {% for fname, widget in filter_widgets.items %}
+      <div class="filter-group">
+        <span class="filter-label">{{ widget.label }}</span>
+        {% if widget.type == "select" %}
+          <select name="{{ fname }}" class="filter-select" onchange="this.form.submit()">
+            <option value="">All</option>
+            {% for val, label in widget.choices %}
+              <option value="{{ val }}" {% if request.GET|get_item:fname == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        {% elif widget.type == "boolean" %}
+          <select name="{{ fname }}" class="filter-select" onchange="this.form.submit()">
+            <option value="">All</option>
+            <option value="1" {% if request.GET|get_item:fname == "1" %}selected{% endif %}>Yes</option>
+            <option value="0" {% if request.GET|get_item:fname == "0" %}selected{% endif %}>No</option>
+          </select>
+        {% elif widget.type == "date_range" %}
+          <div style="display:flex;gap:4px;">
+            <input type="date" name="{{ fname }}__gte" value="{{ request.GET|get_item:fname|add:'__gte' }}" class="filter-input" style="width:130px;" onchange="this.form.submit()">
+            <input type="date" name="{{ fname }}__lte" value="{{ request.GET|get_item:fname|add:'__lte' }}" class="filter-input" style="width:130px;" onchange="this.form.submit()">
+          </div>
+        {% elif widget.type == "number_range" %}
+          <div style="display:flex;gap:4px;">
+            <input type="number" name="{{ fname }}__gte" placeholder="Min" class="filter-input" style="width:80px;" onchange="this.form.submit()">
+            <input type="number" name="{{ fname }}__lte" placeholder="Max" class="filter-input" style="width:80px;" onchange="this.form.submit()">
+          </div>
+        {% else %}
+          <input type="text" name="{{ fname }}" value="{{ request.GET|get_item:fname }}" class="filter-input" style="width:140px;" onchange="this.form.submit()">
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+  </form>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div style="padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:12px;color:var(--text-muted);font-family:var(--font-mono);">
+      {{ page.paginator.count }} record{% if page.paginator.count != 1 %}s{% endif %}
+      {% if search_query %} · filtered{% endif %}
+    </span>
+    <div class="pagination">
+      {% if page.has_previous %}
+        <a href="?{% query_transform page=page.previous_page_number %}" class="page-btn">‹</a>
+      {% endif %}
+      {% for p in page.paginator.page_range %}
+        {% if p == page.number %}
+          <span class="page-btn current">{{ p }}</span>
+        {% elif p >= page.number|add:"-2" and p <= page.number|add:"2" %}
+          <a href="?{% query_transform page=p %}" class="page-btn">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page.has_next %}
+        <a href="?{% query_transform page=page.next_page_number %}" class="page-btn">›</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          {% for header in headers %}
+          <th>
+            {% with fname=admin.list_display|first %}
+            <a href="?{% query_transform o=admin.list_display|slice:forloop.counter0|last ot='asc' %}">
+              {{ header }}
+            </a>
+            {% endwith %}
+          </th>
+          {% endfor %}
+          {% if admin.allow_edit or admin.allow_delete %}
+          <th>Actions</th>
+          {% endif %}
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for cell in row.cells %}
+          <td>{{ cell|safe_html }}</td>
+          {% endfor %}
+          {% if admin.allow_edit or admin.allow_delete %}
+          <td>
+            <div class="td-actions">
+              {% if admin.allow_edit %}
+                <a href="{% cms_edit_url app model_name row.pk %}" class="btn btn-ghost btn-sm">Edit</a>
+              {% endif %}
+              {% if admin.allow_delete %}
+                <a href="{% cms_delete_url app model_name row.pk %}" class="btn btn-danger btn-sm">Delete</a>
+              {% endif %}
+            </div>
+          </td>
+          {% endif %}
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:40px;text-align:center;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:12px;">📭</div>
+      <div style="font-family:var(--font-mono);font-size:13px;">No {{ admin.verbose_name_plural }} found.</div>
+      {% if admin.allow_add %}
+        <a href="{% cms_add_url app model_name %}" class="btn btn-primary" style="margin-top:14px;">Add first {{ admin.verbose_name }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

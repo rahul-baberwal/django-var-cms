@@ -1,0 +1,32 @@
+{% extends "cms_core/base.html" %}
+{% load cms_tags %}
+
+{% block title %}Delete {{ admin.verbose_name }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span> <a href="{% cms_list_url app model_name %}">{{ admin.verbose_name_plural|title }}</a>
+  <span>›</span> Delete
+{% endblock %}
+
+{% block content %}
+<div style="max-width:520px;">
+  <div class="card" style="padding:28px;">
+    <div style="font-size:40px;margin-bottom:16px;">⚠️</div>
+    <div style="font-family:var(--font-head);font-size:20px;font-weight:700;margin-bottom:8px;">Confirm Delete</div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:20px;">
+      Are you sure you want to delete <strong style="color:var(--text);">{{ obj }}</strong>?
+      This action <strong style="color:var(--red);">cannot be undone</strong>.
+    </p>
+
+    <div style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:var(--radius);padding:12px 14px;margin-bottom:20px;font-family:var(--font-mono);font-size:12px;color:#fca5a5;">
+      {{ admin.verbose_name|title }}: {{ obj }}
+    </div>
+
+    <form method="post" style="display:flex;gap:10px;">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Yes, delete permanently</button>
+      <a href="{% cms_list_url app model_name %}" class="btn btn-ghost">Cancel</a>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends "var_cms/base.html" %}
+{% load var_cms_tags %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block breadcrumb %}
+  <span>›</span><a href="#">{{ app }}</a><span>›</span>{{ title }}
+{% endblock %}
+
+{% block topbar_actions %}
+  {% if can_add %}
+    <a href="{% var_cms_add_url app model_name %}" class="btn btn-primary">
+      <span>+</span> Add {{ admin.verbose_name }}
+    </a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+
+<!-- Search + Filters -->
+<div class="card" style="padding:14px 16px;margin-bottom:14px;">
+  <form method="get">
+    <div style="display:flex;flex-direction:column;gap:10px;">
+
+      {% if admin.search_fields %}
+      <div style="display:flex;gap:8px;align-items:center;">
+        <div class="search-wrap">
+          <span class="search-icon"><i data-lucide="search" style="width:14px;height:14px;"></i></span>
+          <input type="text" name="q" value="{{ search_query }}" placeholder="Search {{ admin.verbose_name_plural }}…" class="search-input">
+        </div>
+        <button type="submit" class="btn btn-ghost btn-sm">Search</button>
+        {% if search_query %}<a href="?" class="btn btn-ghost btn-sm">✕ Clear</a>{% endif %}
+      </div>
+      {% endif %}
+
+      {% if filter_widgets %}
+      <div class="filter-bar">
+        {% for fname, widget in filter_widgets.items %}
+        <div class="filter-group">
+          <span class="filter-label">{{ widget.label }}</span>
+          {% if widget.type == "select" %}
+            <select name="{{ fname }}" class="filter-select" onchange="this.form.submit()">
+              <option value="">All</option>
+              {% for val, label in widget.choices %}
+                <option value="{{ val }}" {% if request.GET|get_item:fname == val|stringformat:"s" %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+          {% elif widget.type == "boolean" %}
+            <select name="{{ fname }}" class="filter-select" onchange="this.form.submit()">
+              <option value="">All</option>
+              <option value="1" {% if request.GET|get_item:fname == "1" %}selected{% endif %}>Yes</option>
+              <option value="0" {% if request.GET|get_item:fname == "0" %}selected{% endif %}>No</option>
+            </select>
+          {% elif widget.type == "date_range" %}
+            <div style="display:flex;gap:4px;">
+              <input type="date" name="{{ fname }}__gte" value="{{ request.GET|get_item:fname|add:'__gte' }}" class="filter-input" style="width:150px; min-width:auto;" onchange="this.form.submit()">
+              <span style="color:var(--text-muted);line-height:32px;">–</span>
+              <input type="date" name="{{ fname }}__lte" value="{{ request.GET|get_item:fname|add:'__lte' }}" class="filter-input" style="width:150px; min-width:auto;" onchange="this.form.submit()">
+            </div>
+          {% elif widget.type == "number_range" %}
+            <div style="display:flex;gap:4px;">
+              <input type="number" name="{{ fname }}__gte" placeholder="Min" class="filter-input" style="width:100px; min-width:auto;" onchange="this.form.submit()">
+              <input type="number" name="{{ fname }}__lte" placeholder="Max" class="filter-input" style="width:100px; min-width:auto;" onchange="this.form.submit()">
+            </div>
+          {% else %}
+            <input type="text" name="{{ fname }}" value="{{ request.GET|get_item:fname }}" class="filter-input" style="width:220px;" onchange="this.form.submit()">
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+    </div>
+  </form>
+</div>
+
+<!-- Table -->
+<div class="card">
+  <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+    <span style="font-size:11px;color:var(--text-muted);font-family:var(--fm);">
+      {{ page.paginator.count }} record{% if page.paginator.count != 1 %}s{% endif %}
+      {% if search_query %} · search: "{{ search_query }}"{% endif %}
+    </span>
+    <div class="pagination">
+      {% if page.has_previous %}
+        <a href="?{% query_transform page=page.previous_page_number %}" class="page-btn">‹</a>
+      {% endif %}
+      {% for p in page.paginator.page_range %}
+        {% if p == page.number %}
+          <span class="page-btn current">{{ p }}</span>
+        {% elif p >= page.number|add:"-2" and p <= page.number|add:"2" %}
+          <a href="?{% query_transform page=p %}" class="page-btn">{{ p }}</a>
+        {% endif %}
+      {% endfor %}
+      {% if page.has_next %}
+        <a href="?{% query_transform page=page.next_page_number %}" class="page-btn">›</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="table-wrap">
+    {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          {% for header in headers %}
+          <th><a href="?{% query_transform o=admin.list_display|index:forloop.counter0 ot='asc' %}">{{ header }}</a></th>
+          {% endfor %}
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          {% for cell in row.cells %}
+          <td>{{ cell|safe_html }}</td>
+          {% endfor %}
+          <td>
+            <div class="td-actions">
+              {% if can_view %}
+                <a href="{% var_cms_view_url app model_name row.pk %}" class="btn btn-ghost btn-xs">View</a>
+              {% endif %}
+              {% if can_edit %}
+                <a href="{% var_cms_edit_url app model_name row.pk %}" class="btn btn-blue btn-xs">Edit</a>
+              {% else %}
+                <span class="btn btn-blue btn-xs" style="opacity:0.35;cursor:not-allowed;" title="You don't have edit permission">Edit</span>
+              {% endif %}
+              {% if can_delete %}
+                <a href="{% var_cms_delete_url app model_name row.pk %}" class="btn btn-danger btn-xs">Delete</a>
+              {% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div style="padding:48px;text-align:center;">
+      <div style="font-size:36px;margin-bottom:12px;">📭</div>
+      <div style="font-family:var(--fm);font-size:13px;color:var(--text-muted);">No {{ admin.verbose_name_plural }} found.</div>
+      {% if can_add %}
+        <a href="{% var_cms_add_url app model_name %}" class="btn btn-primary" style="margin-top:14px;">+ Add first {{ admin.verbose_name }}</a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Permission info -->
+{% if admin.permissions %}
+<details style="margin-top:16px;">
+  <summary style="font-size:11px;font-family:var(--fm);color:var(--text-muted);cursor:pointer;">Show permission matrix for this model</summary>
+  <div class="card2" style="margin-top:8px;padding:14px 16px;overflow-x:auto;">
+    <table class="perm-table">
+      <thead>
+        <tr>
+          <th>Role</th><th>Add</th><th>List</th><th>View</th><th>Edit</th><th>Delete</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in admin.permissions %}
+        <tr>
+          <td>{{ p.role }}</td>
+          <td>{% if p.add %}<span class="perm-yes">✓</span>{% else %}<span class="perm-no">–</span>{% endif %}</td>
+          <td>{% if p.list %}<span class="perm-yes">✓</span>{% else %}<span class="perm-no">–</span>{% endif %}</td>
+          <td>{% if p.view %}<span class="perm-yes">✓</span>{% else %}<span class="perm-no">–</span>{% endif %}</td>
+          <td>{% if p.edit %}<span class="perm-yes">✓</span>{% else %}<span class="perm-no">–</span>{% endif %}</td>
+          <td>{% if p.delete %}<span class="perm-yes">✓</span>{% else %}<span class="perm-no">–</span>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</details>
+{% endif %}
+
+{% endblock %}

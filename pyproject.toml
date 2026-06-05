@@ -1,6 +1,6 @@
 [project]
 name = "django-var-cms"
-version = "1.1.1"
+version = "1.1.2"
 description = "A modern, role-based Django CMS registry with rich media previews"
 requires-python = ">=3.11"
 readme = "README.md"

@@ -37,7 +37,7 @@ uv add django-var-cms pillow whitenoise
 ```
 
 ### 2. Configure settings.py
-Register `"var_cms"` in your Django `INSTALLED_APPS` and specify static/media paths. You can also customize branding globally here:
+Register `"var_cms"` in your Django `INSTALLED_APPS` and specify static/media paths:
 
 ```python
 # settings.py
@@ -60,21 +60,6 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 # Redirect paths for authentication
 LOGIN_URL = "/var-cms/login/"
 LOGIN_REDIRECT_URL = "/var-cms/"
-
-# ── Global VAR CMS Site Customizations ──────────────────────────────────────
-VAR_CMS_SITE_HEADER = "Easy Khata"          # Custom brand title
-VAR_CMS_SITE_SUB = "ADMIN PANEL"           # Subtitle
-VAR_CMS_SITE_URL = "/"                     # "View Site" redirect URL
-VAR_CMS_LOGO_URL = "/static/var_cms/var.png" # Brand Logo
-VAR_CMS_ACCENT_COLOR = "142, 72%, 45%"      # Custom HSL accent color (Emerald green)
-VAR_CMS_ENABLE_OTP = False                  # Optional email OTP 2FA on login
-
-# Optional Developer Profile (shown in Help section)
-VAR_CMS_DEVELOPER_NAME = "Rahul Baberwal"
-VAR_CMS_DEVELOPER_WEBSITE = "https://rahulbaberwal.com"
-VAR_CMS_DEVELOPER_GITHUB = "https://github.com/rahul-baberwal"
-VAR_CMS_DEVELOPER_LINKEDIN = "https://linkedin.com/in/rahul-baberwal"
-VAR_CMS_DEVELOPER_EMAIL = "im@rahulbaberwal.com"
 ```
 
 ### 3. Add URL Routing
@@ -95,6 +80,7 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 ```
+
 
 ---
 
@@ -137,12 +123,6 @@ from var_cms.registry import var_cms_site, VarCMSModelAdmin
 from var_cms.permissions import RolePermission, UserPermission
 from .models import Article
 
-# Customize branding globally
-var_cms_site.site_header = "My CMS"
-var_cms_site.site_sub    = "Control Center"
-var_cms_site.site_url    = "https://example.com"
-var_cms_site.logo_url    = "/static/var_cms/var.png"  # Custom brand logo
-
 class ArticleAdmin(VarCMSModelAdmin):
     list_display  = ["title", "category", "author", "status", "created_at"]
     list_filter   = ["status", "category"]
@@ -183,6 +163,95 @@ var_cms_site.register(Article, ArticleAdmin)
 
 ---
 
+## 📝 Custom Form Layouts & Field Settings
+
+You can customize the column widths, widget styles, field placeholders, and help messages directly in your model's `VarCMSModelAdmin` registration:
+
+- `form_field_widths`: A dictionary mapping field names to layout width presets. The form runs on a 12-column grid and expands to fill the entire remaining width of the screen. Available width options:
+  - `"full"`: Spans the full width of the form (12 columns). Checkboxes and Textareas take full-width by default.
+  - `"half"`: Spans half the width of the form (6 columns). All other standard fields default to half-width so that two fields sit side-by-side.
+  - `"one-third"`: Spans one-third of the form (4 columns).
+  - `"two-thirds"`: Spans two-thirds of the form (8 columns).
+  - `"one-fourth"`: Spans one-fourth of the form (3 columns).
+  - `"three-fourths"`: Spans three-fourths of the form (9 columns).
+- `form_field_classes`: A dictionary mapping field names to container CSS classes.
+- `form_field_styles`: A dictionary mapping field names to container custom inline CSS style rules.
+- `form_widget_classes`: A dictionary mapping field names to CSS classes injected directly on the input/select/textarea widget itself.
+- `form_field_placeholders`: A dictionary mapping field names to custom input placeholders.
+- `form_field_help_texts`: A dictionary mapping field names to custom user help messages.
+
+### Width Preset Example
+
+```python
+class ArticleAdmin(VarCMSModelAdmin):
+    # Form layout width settings (simple presets, no raw CSS needed)
+    form_field_widths = {
+        "title": "two-thirds",
+        "status": "one-third",
+        "category": "half",
+        "author": "half",
+    }
+
+    # Widget class injections (optional)
+    form_widget_classes = {
+        "title": "form-control-lg",
+    }
+
+    # Placeholders & custom instructions
+    form_field_placeholders = {
+        "title": "Enter article title...",
+    }
+    form_field_help_texts = {
+        "body": "Write the full article details using the Quill editor.",
+    }
+```
+
+---
+
+### Field Row Grouping (`form_field_rows`)
+
+Group multiple fields into a single visual row using `form_field_rows`. Fields in the same row will automatically share the available width equally (e.g., 3 fields = 4 columns each on a 12-col grid).
+
+- Fields listed in a row override any individual `form_field_widths` for those fields.
+- Fields not included in any row continue to use the default width rules.
+- Supports responsive wrapping on smaller screens automatically.
+
+```python
+class CustomerAdmin(VarCMSModelAdmin):
+    # Show first_name, last_name side-by-side (2 cols = each gets 6)
+    # Show mobile, email, dob in one row (3 cols = each gets 4)
+    form_field_rows = [
+        ["first_name", "last_name"],
+        ["mobile", "email", "date_of_birth"],
+    ]
+```
+
+---
+
+### Custom Dropdown Widget Types (`form_field_widgets`)
+
+Control the dropdown experience for any `ForeignKey`, `CharField with choices`, or `ManyToManyField` using `form_field_widgets`.
+
+Available widget types:
+- `"select"` — Standard HTML `<select>` dropdown (default behaviour, no override needed).
+- `"select_search"` — A beautiful custom searchable dropdown with a live search input. No external dependency needed.
+- `"multiselect"` — Renders all choices as a styled checkbox list for multi-selection.
+- `"multiselect_search"` — Same as above but with a search/filter input above the list.
+
+```python
+class OrderAdmin(VarCMSModelAdmin):
+    form_field_widgets = {
+        "status":   "select",             # default plain dropdown
+        "customer": "select_search",      # searchable dropdown
+        "tags":     "multiselect_search", # checkbox list with search
+    }
+```
+
+> **Note:** `multiselect` and `multiselect_search` work best with `ManyToManyField` fields. For `ForeignKey` fields, use `select_search` instead.
+
+---
+
+
 ## 🎨 Layout Customizations
 
 You can customize the accent color scheme using HSL values on the global `var_cms_site` registry:
@@ -215,26 +284,68 @@ For detailed reference on branding customizations, optional two-factor authentic
 
 ### 🎨 Branding & Customization Settings
 
-You can customize the header, subtitle, favicon, and email verification options on the global registry singleton.
-
-Inside your `var_cms_admin.py` or startup setup, modify the settings on the singleton instance `var_cms_site`:
+You can customize the header, subtitle, logo, HSL accent color, and email verification options directly in your Django `settings.py`:
 
 ```python
-from var_cms.registry import var_cms_site
+# settings.py
 
-# ── Change Name & Subtitle ───────────────────────────────────────────────
-var_cms_site.site_header = "CMS"              # Default: "VAR CMS"
-var_cms_site.site_sub    = "DASHBOARD"        # Default: "CONTROL PANEL"
+VAR_CMS_SITE_HEADER = "Easy Khata"          # Custom brand title
+VAR_CMS_SITE_SUB = "ADMIN PANEL"           # Subtitle
+VAR_CMS_SITE_URL = "/"                     # "View Site" redirect URL
+VAR_CMS_LOGO_URL = "/static/var_cms/var.png" # Brand Logo
+VAR_CMS_ACCENT_COLOR = "142, 72%, 45%"      # Custom HSL accent color (Emerald green)
+VAR_CMS_ENABLE_OTP = False                  # Optional email OTP 2FA on login
 
-# ── Customize "View Site" Link ───────────────────────────────────────────
-var_cms_site.site_url    = "https://myblog.com" # Default: "/"
-
-# ── Custom Image Logo & Favicon ──────────────────────────────────────────
-var_cms_site.logo_url    = "/static/var_cms/var.png"  # Serves var.png as the brand logo & tab favicon
-
-# ── Optional OTP 2FA Verification ────────────────────────────────────────
-var_cms_site.enable_otp  = True               # Requires SMTP settings. Sends 6-digit OTP code to email.
+# Optional Developer Profile (shown in Help section)
+VAR_CMS_DEVELOPER_NAME = "Rahul Baberwal"
+VAR_CMS_DEVELOPER_WEBSITE = "https://rahulbaberwal.com"
+VAR_CMS_DEVELOPER_GITHUB = "https://github.com/rahul-baberwal"
+VAR_CMS_DEVELOPER_LINKEDIN = "https://linkedin.com/in/rahul-baberwal"
+VAR_CMS_DEVELOPER_EMAIL = "im@rahulbaberwal.com"
+VAR_CMS_DEVELOPER_IMAGE = "https://github.com/rahul-baberwal.png"
 ```
+
+### 📊 Dashboard Card Visibility & Action Buttons
+
+You can customize whether specific model cards appear on the dashboard, and add custom navigation buttons and links directly within your model registration class.
+
+#### 1. Show or Hide Cards
+By default, every registered model is hidden from the dashboard (`dashboard_card = False` by default). You can show or hide a card in the following ways:
+- **Locally on the ModelAdmin Class**: Set `dashboard_card = True` to show the card.
+  ```python
+  class InvoiceAdmin(VarCMSModelAdmin):
+      dashboard_card = True   # will appear on dashboard
+
+  class LogAdmin(VarCMSModelAdmin):
+      dashboard_card = False  # won't appear on dashboard (default)
+  ```
+- **Globally in settings.py**: Configure shown/hidden card settings:
+  ```python
+  # Hide specific cards:
+  VAR_CMS_HIDDEN_DASHBOARD_CARDS = ["logentry", "demo.category"]
+
+  # Show ONLY these cards:
+  VAR_CMS_SHOWN_DASHBOARD_CARDS  = ["invoice", "customer"]  # show ONLY these
+  ```
+
+#### 2. Adding Card Buttons & Links
+You can specify custom quick-action buttons at the bottom of each dashboard card using the `card_buttons` attribute on `VarCMSModelAdmin`.
+Each button is represented by a dictionary with:
+- `label`: The text displayed on the button.
+- `action`: Built-in actions like `"list"` (navigates to the model's list view) or `"add"` (navigates to the add form).
+- `url` (optional): Any custom relative or absolute URL. Used if `action` is not set.
+- `class` (optional): Button style classes, e.g., `"btn-primary"`, `"btn-ghost"`, `"btn-danger"`.
+
+```python
+class ArticleAdmin(VarCMSModelAdmin):
+    icon = "file-text"
+    card_buttons = [
+        {"label": "All Articles", "action": "list"},
+        {"label": "Write Draft", "action": "add"},
+        {"label": "External Link", "url": "https://example.com", "class": "btn-ghost"}
+    ]
+```
+
 
 ### 🔑 Authentication & Password Tools
 
@@ -344,6 +455,22 @@ class Page(models.Model):
 from var_cms.registry import var_cms_site, VarCMSModelAdmin
 from var_cms.permissions import RolePermission, UserPermission
 from .models import Article, Category, MediaAsset, Page
+
+# ── Custom CMS branding configurations ─────────────────────────────────────
+var_cms_site.site_header = "CMS"
+var_cms_site.site_sub    = "CONTROL PANEL"
+var_cms_site.site_url    = "https://example.com"
+var_cms_site.logo_url    = "/static/var_cms/var.png"
+var_cms_site.accent_color = "142, 72%, 45%" # Emerald green
+var_cms_site.enable_otp  = False
+
+# ── Developer Profile configurations ─────────────────────────────────────────
+var_cms_site.developer_name = "Rahul Baberwal"
+var_cms_site.developer_website = "https://rahulbaberwal.com"
+var_cms_site.developer_github = "https://github.com/rahul-baberwal"
+var_cms_site.developer_linkedin = "https://linkedin.com/in/rahul-baberwal"
+var_cms_site.developer_email = "im@rahulbaberwal.com"
+var_cms_site.developer_image = "https://github.com/rahul-baberwal.png"
 
 class CategoryAdmin(VarCMSModelAdmin):
     list_display  = ["name", "slug", "is_active", "created_at"]

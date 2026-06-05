@@ -2,6 +2,7 @@
 
 [![Documentation Preview](https://img.shields.io/badge/docs-live_preview-emerald?style=for-the-badge&logo=github)](https://rahul-baberwal.github.io/django-var-cms/)
 [![Latest on Django Packages](https://img.shields.io/badge/Django_Packages-django--var--cms-8c3c26.svg?style=for-the-badge&logo=django)](https://djangopackages.org/packages/p/django-var-cms/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](https://opensource.org/licenses/MIT)
 
 A modern, highly customizable administrative Control Panel and CMS registry for Django projects. Built with premium glassmorphic aesthetics, role-based security, and rich media processing.
 
@@ -440,3 +441,7 @@ var_cms_site.register(Page,       PageAdmin)
 ## 👥 Credits & Authors
 
 Created and maintained by **Rahul Baberwal** — [rahulbaberwal.com](https://rahulbaberwal.com).
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

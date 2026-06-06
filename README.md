@@ -295,7 +295,7 @@ You can customize the header, subtitle, logo, HSL accent color, and email verifi
 ```python
 # settings.py
 
-VAR_CMS_SITE_HEADER = "Easy Khata"          # Custom brand title
+VAR_CMS_SITE_HEADER = "VAR CMS"          # Custom brand title
 VAR_CMS_SITE_SUB = "ADMIN PANEL"           # Subtitle
 VAR_CMS_SITE_URL = "/"                     # "View Site" redirect URL
 VAR_CMS_LOGO_URL = "/static/var_cms/var.png" # Brand Logo

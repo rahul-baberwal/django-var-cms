@@ -7,9 +7,9 @@
 <!-- Premium Banner Greeting -->
 <div style="background:linear-gradient(135deg, var(--accent), var(--purple));padding:28px 32px;border-radius:var(--radius);margin-bottom:28px;color:#fff;box-shadow:0 8px 24px var(--accent-glow);position:relative;overflow:hidden;">
   <div style="position:relative;z-index:2;">
-    <h2 style="font-family:var(--fh);font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;">Control Center</h2>
+    <h2 style="font-family:var(--fh);font-size:24px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;">{{ dashboard_title }}</h2>
     <p style="opacity:0.9;font-size:13.5px;max-width:540px;margin-bottom:14px;line-height:1.5;">
-      Welcome back, <strong>{{ request.user }}</strong>. Manage your models, edit content with rich HTML, crop assets, and translate metadata directly.
+      {{ dashboard_text|safe }}
     </p>
     {% if request.user.groups.all %}
     <div style="display:flex;gap:6px;align-items:center;">

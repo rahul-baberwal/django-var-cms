@@ -575,6 +575,8 @@ class VarCMSSite:
         self.username_field         = _cfg("USERNAME_FIELD",         None)
         self.hidden_dashboard_cards = _cfg("HIDDEN_DASHBOARD_CARDS", [])
         self.shown_dashboard_cards  = _cfg("SHOWN_DASHBOARD_CARDS",  [])
+        self.dashboard_title        = _cfg("DASHBOARD_TITLE",        "Command Hub")
+        self.dashboard_text         = _cfg("DASHBOARD_TEXT",         "Welcome back, {username}. Your central command is active. Seamlessly manage database models, publish rich dynamic content, crop media assets, and orchestrate translation systems in real time.")
 
     def _get_username_field(self) -> str:
         if self.username_field:
@@ -709,6 +711,16 @@ class VarCMSSite:
     def index_view(self, request):
         ctx = self._base_ctx(request)
         ctx["title"] = "Dashboard"
+        
+        username = request.user.get_username() if hasattr(request.user, 'get_username') else str(request.user)
+        d_title = self.dashboard_title
+        d_text = self.dashboard_text
+        try:
+            d_text = d_text.format(username=username, user=username)
+        except Exception:
+            pass
+        ctx["dashboard_title"] = d_title
+        ctx["dashboard_text"] = d_text
         
         registry_items = []
         for m, a in self._registry.items():

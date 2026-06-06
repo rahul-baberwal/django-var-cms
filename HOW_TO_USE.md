@@ -82,7 +82,7 @@ You can customize the header, subtitle, logo, HSL accent color, and email verifi
 ```python
 # settings.py
 
-VAR_CMS_SITE_HEADER = "Easy Khata"          # Custom brand title
+VAR_CMS_SITE_HEADER = "VAR CMS"          # Custom brand title
 VAR_CMS_SITE_SUB = "ADMIN PANEL"           # Subtitle
 VAR_CMS_SITE_URL = "/"                     # "View Site" redirect URL
 VAR_CMS_LOGO_URL = "/static/var_cms/var.png" # Brand Logo
@@ -151,4 +151,18 @@ Validate user input on specific text fields using custom regular expressions. Th
         regex_validators = {
             "slug": (r"^[a-z0-9-]+$", "Slug must consist of lowercase letters, numbers, and hyphens only.")
         }
+    ```
+
+### 5. Tailwind CSS Support
+*   Developers can install `django-var-cms` with direct Tailwind CLI support:
+    ```bash
+    pip install django-var-cms[tailwind]
+    ```
+*   This automatically installs `django-tailwind-cli` in your project. It enables you to compile utility-first CSS classes for your custom CMS layout views, widgets, or dashboards using the built-in management commands:
+    ```bash
+    # Build production styles
+    python manage.py tailwind build
+    
+    # Run dev server with live reload
+    python manage.py tailwind start
     ```

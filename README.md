@@ -26,14 +26,20 @@ Created by **[Rahul Baberwal](https://rahulbaberwal.com)**.
 ## ⚙️ Setup & Installation
 
 ### 1. Install Dependencies
-Install `django-var-cms` along with required media dependencies:
+Install `django-var-cms` along with required media dependencies and optional Tailwind CSS support:
 
 ```bash
-# Using pip
+# Standard installation
 pip install django-var-cms pillow whitenoise
+
+# With Tailwind CSS support
+pip install django-var-cms[tailwind] pillow whitenoise
 
 # Using uv
 uv add django-var-cms pillow whitenoise
+
+# Using uv with Tailwind CSS
+uv add django-var-cms[tailwind] pillow whitenoise
 ```
 
 ### 2. Configure settings.py
@@ -561,6 +567,26 @@ var_cms_site.register(Category,   CategoryAdmin)
 var_cms_site.register(Article,    ArticleAdmin)
 var_cms_site.register(MediaAsset, MediaAssetAdmin)
 var_cms_site.register(Page,       PageAdmin)
+```
+
+---
+
+## ⚡ Tailwind CSS Integration
+
+`django-var-cms` plays beautifully with Tailwind CSS projects. By installing the optional `[tailwind]` extra dependency:
+
+```bash
+pip install django-var-cms[tailwind]
+```
+
+This registers `django-tailwind-cli` in your project, allowing you to use utility-first styles for compiling layout templates, custom dashboards, or frontend theme assets using standard commands:
+
+```bash
+# Build production bundle
+python manage.py tailwind build
+
+# Start dev server with hot reload
+python manage.py tailwind start
 ```
 
 ---

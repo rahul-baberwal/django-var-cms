@@ -1,6 +1,6 @@
 [project]
 name = "django-var-cms"
-version = "1.1.4"
+version = "1.1.5"
 description = "A modern, role-based Django CMS registry with Tailwind CSS support and rich media previews"
 requires-python = ">=3.11"
 readme = "README.md"

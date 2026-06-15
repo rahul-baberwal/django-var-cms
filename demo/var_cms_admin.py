@@ -31,6 +31,22 @@ class CategoryAdmin(VarCMSModelAdmin):
         "superuser": "__all__",
         "editor":    ["name", "description", "is_active"],
     }
+    custom_object_actions = [
+        {
+            "name": "toggle_active",
+            "label": "Toggle Active",
+            "class": "btn-blue",
+            "icon": "shuffle",
+            "action_fn": "toggle_active_status"
+        }
+    ]
+
+    def toggle_active_status(self, request, obj):
+        from django.contrib import messages
+        obj.is_active = not obj.is_active
+        obj.save()
+        messages.success(request, f"Category '{obj.name}' active status toggled to {obj.is_active}.")
+        return None
 
 
 class ArticleAdmin(VarCMSModelAdmin):

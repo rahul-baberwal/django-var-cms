@@ -280,6 +280,7 @@ class VarCMSModelAdmin:
     icon: str = ""
     dashboard_card: bool = False
     card_buttons: List[Dict[str, str]] = []
+    custom_object_actions: List[Dict[str, Any]] = []
     list_image_width: int = 38
     list_image_height: int = 38
 
@@ -630,6 +631,7 @@ class VarCMSSite:
                 path(f"{ap}/{mn}/<pk>/",         lv(self.edit_view),   {"app": ap, "model": mn}, name=f"var_cms_{ap}_{mn}_edit"),
                 path(f"{ap}/{mn}/<pk>/delete/",  lv(self.delete_view), {"app": ap, "model": mn}, name=f"var_cms_{ap}_{mn}_delete"),
                 path(f"{ap}/{mn}/<pk>/view/",    lv(self.detail_view), {"app": ap, "model": mn}, name=f"var_cms_{ap}_{mn}_view"),
+                path(f"{ap}/{mn}/<pk>/action/<action_name>/", lv(self.custom_action_view), {"app": ap, "model": mn}, name=f"var_cms_{ap}_{mn}_action"),
                 # Media API
                 path(f"api/media/crop/",         lv(self.media_crop_view),    name="var_cms_media_crop"),
                 path(f"api/media/convert/",      lv(self.media_convert_view), name="var_cms_media_convert"),
@@ -1165,6 +1167,42 @@ class VarCMSSite:
         ctx = self._base_ctx(request)
         ctx.update({"title": "Delete", "obj": obj, "admin": admin, "app": app, "model_name": model})
         return render(request, "var_cms/delete.html", ctx)
+
+    @var_cms_error_wrapper
+    def custom_action_view(self, request, app, model, pk, action_name):
+        admin = self._get_admin(app, model)
+        # Check permissions: by default require edit permission for action
+        if not admin.has_permission(request, "edit"):
+            raise PermissionDenied
+        
+        obj = get_object_or_404(admin.model, pk=pk)
+        
+        action = None
+        for act in getattr(admin, "custom_object_actions", []):
+            if act.get("name") == action_name:
+                action = act
+                break
+        
+        if not action:
+            raise Http404(f"Custom action '{action_name}' not found.")
+            
+        action_fn = action.get("action_fn")
+        if isinstance(action_fn, str):
+            action_fn = getattr(admin, action_fn, None)
+            
+        if not action_fn or not callable(action_fn):
+            raise Http404(f"Action function for '{action_name}' is not callable.")
+            
+        response = action_fn(request, obj)
+        
+        if response:
+            return response
+            
+        # Default fallback: redirect back to HTTP_REFERER or to list page
+        referer = request.META.get("HTTP_REFERER")
+        if referer:
+            return redirect(referer)
+        return redirect(reverse(f"var_cms:var_cms_{app}_{model}_list"))
 
     # ── Media API views ───────────────────────────────────────────────────────
 

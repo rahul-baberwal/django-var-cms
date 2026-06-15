@@ -154,3 +154,8 @@ def field_widget_type(field, admin):
     """Return the custom widget type for a field, or empty string."""
     widgets = getattr(admin, "form_field_widgets", {})
     return widgets.get(field.html_name, "")
+
+
+@register.simple_tag
+def var_cms_action_url(app, model_name, pk, action_name):
+    return reverse(f"var_cms:var_cms_{app}_{model_name}_action", args=[pk, action_name])

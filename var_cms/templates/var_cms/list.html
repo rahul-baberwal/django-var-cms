@@ -120,6 +120,16 @@
               {% if can_view %}
                 <a href="{% var_cms_view_url app model_name row.pk %}" class="btn btn-ghost btn-xs">View</a>
               {% endif %}
+              {% if can_edit and admin.custom_object_actions %}
+                {% for act in admin.custom_object_actions %}
+                  <a href="{% var_cms_action_url app model_name row.pk act.name %}" class="btn {{ act.class|default:'btn-ghost' }} btn-xs">
+                    {% if act.icon %}
+                      <i data-lucide="{{ act.icon }}" style="width:12px;height:12px;display:inline-block;vertical-align:middle;margin-right:2px;"></i>
+                    {% endif %}
+                    {{ act.label }}
+                  </a>
+                {% endfor %}
+              {% endif %}
               {% if can_edit %}
                 <a href="{% var_cms_edit_url app model_name row.pk %}" class="btn btn-blue btn-xs">Edit</a>
               {% else %}

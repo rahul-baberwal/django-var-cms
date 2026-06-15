@@ -350,6 +350,84 @@ class ArticleAdmin(VarCMSModelAdmin):
         {"label": "Write Draft", "action": "add"},
         {"label": "External Link", "url": "https://example.com", "class": "btn-ghost"}
     ]
+
+
+### ⚡ Custom Object Actions
+
+You can add custom action buttons (like "Approve", "Send Notification", "Mark Active") to both the **List View** table rows and the **Details View** page. 
+
+To define custom object actions, define `custom_object_actions` on your `VarCMSModelAdmin` class. Each action is represented by a dictionary containing:
+- `name`: Unique string identifier for the action (used in the URL).
+- `label`: Display text on the button.
+- `class` (optional): CSS class for styling, e.g., `"btn-primary"`, `"btn-green"`, `"btn-blue"`, `"btn-danger"`, or `"btn-ghost"`.
+- `icon` (optional): Name of a Lucide icon (e.g., `"check-circle"`, `"mail"`, `"shield"`).
+- `action_fn`: A callable or a string naming a method on the `VarCMSModelAdmin` class that executes the action logic. The function receives `(self, request, obj)`.
+
+If the `action_fn` returns `None` (or doesn't return anything), the user will be automatically redirected back to the referring page. If you want custom routing, the function can return a custom `HttpResponse` (such as a redirect or JSON response).
+
+#### Example 1: Approve Company (with logic checking)
+In this use case, we want to check if a company has uploaded all required documents before approving it. If they are missing, we show an error message using Django's message framework.
+
+```python
+class CompanyAdmin(VarCMSModelAdmin):
+    list_display = ["name", "is_approved", "documents_uploaded"]
+    custom_object_actions = [
+        {
+            "name": "approve",
+            "label": "Approve",
+            "class": "btn-green",
+            "icon": "check-circle",
+            "action_fn": "approve_company"
+        }
+    ]
+
+    def approve_company(self, request, obj):
+        from django.contrib import messages
+        
+        # logic check
+        if not obj.documents_uploaded:
+            messages.error(request, f"Cannot approve {obj.name} - documents are not uploaded yet.")
+            return None # Redirect back with error
+            
+        obj.is_approved = True
+        obj.save()
+        messages.success(request, f"Company {obj.name} has been successfully approved.")
+        return None
+```
+
+#### Example 2: Send welcome email to Subscriber
+In this use case, we want a button to manually trigger a welcome email notification to a subscriber.
+
+```python
+class SubscriberAdmin(VarCMSModelAdmin):
+    list_display = ["email", "first_name", "status"]
+    custom_object_actions = [
+        {
+            "name": "send_welcome",
+            "label": "Send Welcome",
+            "class": "btn-blue",
+            "icon": "mail",
+            "action_fn": "send_welcome_email"
+        }
+    ]
+
+    def send_welcome_email(self, request, obj):
+        from django.core.mail import send_mail
+        from django.contrib import messages
+        
+        try:
+            send_mail(
+                "Welcome to our newsletter!",
+                f"Hello {obj.first_name},\nThank you for joining us!",
+                "noreply@example.com",
+                [obj.email]
+            )
+            messages.success(request, f"Welcome email sent successfully to {obj.email}.")
+        except Exception as e:
+            messages.error(request, f"Failed to send email: {e}")
+        return None
+```
+
 ```
 
 

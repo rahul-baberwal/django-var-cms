@@ -10,6 +10,16 @@
 
 {% block topbar_actions %}
   <a href="{% var_cms_list_url app model_name %}" class="btn btn-ghost btn-sm">← Back</a>
+  {% if can_edit and admin.custom_object_actions %}
+    {% for act in admin.custom_object_actions %}
+      <a href="{% var_cms_action_url app model_name obj.pk act.name %}" class="btn {{ act.class|default:'btn-ghost' }} btn-sm">
+        {% if act.icon %}
+          <i data-lucide="{{ act.icon }}" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
+        {% endif %}
+        {{ act.label }}
+      </a>
+    {% endfor %}
+  {% endif %}
   {% if can_edit %}
     <a href="{% var_cms_edit_url app model_name obj.pk %}" class="btn btn-primary btn-sm">Edit</a>
   {% endif %}
@@ -28,6 +38,16 @@
       {% endfor %}
     </div>
     <div style="margin-top:18px;display:flex;gap:8px;">
+      {% if can_edit and admin.custom_object_actions %}
+        {% for act in admin.custom_object_actions %}
+          <a href="{% var_cms_action_url app model_name obj.pk act.name %}" class="btn {{ act.class|default:'btn-ghost' }} btn-sm">
+            {% if act.icon %}
+              <i data-lucide="{{ act.icon }}" style="width:14px;height:14px;display:inline-block;vertical-align:middle;margin-right:4px;"></i>
+            {% endif %}
+            {{ act.label }}
+          </a>
+        {% endfor %}
+      {% endif %}
       {% if can_edit %}
         <a href="{% var_cms_edit_url app model_name obj.pk %}" class="btn btn-primary btn-sm">✏ Edit</a>
       {% endif %}

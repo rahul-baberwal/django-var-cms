@@ -1,0 +1,91 @@
+# django-var-cms
+
+A modern, highly customizable administrative Control Panel and CMS registry for Django projects. Built with premium glassmorphic aesthetics, role-based security, and rich media processing.
+
+## Installation & Setup
+
+Install the library with Django, Pillow, and WhiteNoise:
+
+```bash
+pip install django-var-cms pillow whitenoise
+# Or with Tailwind support
+pip install django-var-cms[tailwind] pillow whitenoise
+# Using uv
+uv add django-var-cms pillow whitenoise
+```
+
+### Django Settings Configuration
+
+Register `"var_cms"` in your Django `INSTALLED_APPS`:
+
+```python
+# settings.py
+INSTALLED_APPS = [
+    ...,
+    "var_cms",
+]
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+LOGIN_URL = "/var-cms/login/"
+LOGIN_REDIRECT_URL = "/var-cms/"
+```
+
+### Routing
+
+Include routes in the main `urls.py`:
+
+```python
+# urls.py
+from django.urls import path, include
+
+urlpatterns = [
+    path("var-cms/", include("var_cms.urls", namespace="var_cms")),
+]
+```
+
+## Registering Models
+
+Create `var_cms_admin.py` in your Django app directory. It is automatically discovered on startup.
+
+```python
+from var_cms.registry import var_cms_site, VarCMSModelAdmin
+from var_cms.permissions import RolePermission, UserPermission
+from .models import Article
+
+class ArticleAdmin(VarCMSModelAdmin):
+    list_display  = ["title", "category", "author", "status", "created_at"]
+    list_filter   = ["status", "category"]
+    search_fields = ["title", "body"]
+    readonly_fields = ["created_at"]
+    html_fields = ["body"]  # Quill.js Editor
+    icon = "file-text"
+    
+    # Validation
+    regex_validators = {
+        "slug": (r"^[a-z0-9-]+$", "Slug must consist of lowercase letters, numbers, and hyphens only.")
+    }
+    
+    # Permissions
+    permissions = [
+        RolePermission("superuser", add=True,  list=True, view=True, edit=True,  delete=True),
+        RolePermission("editor",    add=True,  list=True, view=True, edit=True,  delete=False),
+        RolePermission("viewer",    add=False, list=True, view=True, edit=False, delete=False),
+    ]
+
+var_cms_site.register(Article, ArticleAdmin)
+```
+
+## URL Routing Details
+
+- Dashboard: `/var-cms/`
+- List View: `/var-cms/{app}/{model}/`
+- Add View: `/var-cms/{app}/{model}/add/`
+- Edit View: `/var-cms/{app}/{model}/{pk}/`
+- Details View: `/var-cms/{app}/{model}/{pk}/view/`
+- Delete View: `/var-cms/{app}/{model}/{pk}/delete/`
+- Crop Endpoint: `/var-cms/api/media/crop/`
+- Conversion Endpoint: `/var-cms/api/media/convert/`
